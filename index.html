@@ -1,0 +1,2445 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Alfabetización de Adultos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase Client JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        @media print {
+            header, .tab-btn-container, .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: #ffffff !important;
+            }
+            .print-area {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col">
+
+    <!-- SECCIÓN DE LOGIN -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center bg-slate-100 p-4 w-full">
+        <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 w-full max-w-md">
+            <div class="text-center mb-6">
+                <img src="logo.png" alt="Logo Ministerio" class="w-20 h-20 mx-auto mb-3 object-contain rounded-full shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=Logo';">
+                <h2 class="text-xl font-bold text-slate-900">Ministerio de Alfabetización</h2>
+                <p class="text-xs text-slate-500">Ingresa tus credenciales para acceder</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Correo Electrónico</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-envelope"></i>
+                        </span>
+                        <input type="email" id="login-email" required placeholder="correo@ejemplo.com" class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Contraseña</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div id="login-error" class="hidden text-xs text-red-600 bg-red-50 border border-red-200 p-2.5 rounded-xl font-medium"></div>
+
+                <button type="submit" id="btn-login" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Iniciar Sesión</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ESTRUCTURA PRINCIPAL DE LA APP -->
+    <div id="app-container" class="hidden h-full flex flex-col">
+        <!-- App Header -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="logo.png" alt="Logo Ministerio de Alfabetización" class="w-12 h-12 object-contain rounded-full shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Logo';">
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 leading-tight">Ministerio de Alfabetización</h1>
+                        <p class="text-xs text-slate-500">Gestión Integral de Adultos</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <div id="user-role-badge" class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 hidden sm:block">
+                        Rol: Administrador
+                    </div>
+
+                    <div id="user-email-badge" class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 hidden sm:block">
+                    </div>
+
+                    <button onclick="handleLogout()" title="Cerrar Sesión" class="h-9 w-9 rounded-full bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm border border-red-200 transition-colors">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+            <!-- Navigation Bar -->
+            <div class="tab-btn-container flex space-x-1 sm:space-x-2 bg-slate-200/70 p-1.5 rounded-2xl mb-6 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 bg-white text-brand-700 shadow-sm">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Resumen</span>
+                </button>
+                <button onclick="switchTab('level-tracker')" id="nav-level-tracker" class="tab-btn flex-1 min-w-[130px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Seguimiento Nivel</span>
+                </button>
+                <button onclick="switchTab('grades')" id="nav-grades" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Notas / Tareas</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-reports" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-file-contract"></i>
+                    <span>Informes</span>
+                </button>
+                <button onclick="switchTab('students')" id="nav-students" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Alumnos</span>
+                </button>
+                <button onclick="switchTab('teachers')" id="nav-teachers" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span>Maestros</span>
+                </button>
+                <button onclick="switchTab('documents')" id="nav-documents" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>Documentos</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content flex-1 flex flex-col space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Alumnos</p>
+                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-total-students">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Asistencias Tomadas</p>
+                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-avg-attendance">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Alumnos Nivel 0</p>
+                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-nivel0">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Con Documentos</p>
+                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-total-docs">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col">
+                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                            <i class="fa-solid fa-bolt text-brand-600 mr-2"></i> Alumnos Registrados Recientemente
+                        </h3>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        <th class="pb-3 font-medium">Alumno</th>
+                                        <th class="pb-3 font-medium">Maestro Responsable</th>
+                                        <th class="pb-3 font-medium">Nivel</th>
+                                        <th class="pb-3 font-medium text-right">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-students-list" class="divide-y divide-slate-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                        <div class="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-2 rounded-xl text-xs font-semibold w-fit">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span id="db-status-text">Supabase Conectado</span>
+                        </div>
+                        <button onclick="switchTab('students'); openAddStudentModal();" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>Registrar Nuevo Alumno</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: SEGUIMIENTO POR NIVEL (FLUJO UNIFICADO) -->
+            <div id="tab-level-tracker" class="tab-content hidden flex-1 flex flex-col space-y-6">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-4">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                        <div class="w-full sm:w-auto">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Seleccionar Nivel:</label>
+                            <select id="tracker-level-select" onchange="cargarSeguimientoNivel()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                                <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
+                                <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
+                                <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
+                                <option value="Avanzado (Nivel 3)">Avanzado (Nivel 3)</option>
+                                <option value="Tercer Ciclo (Nivel 4)">Tercer Ciclo (Nivel 4)</option>
+                            </select>
+                        </div>
+
+                        <div class="w-full sm:w-auto">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fecha de Clase:</label>
+                            <input type="date" id="tracker-date-select" onchange="validarFechaLunesMartes(); cargarSeguimientoNivel();" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+
+                        <div id="tracker-day-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 self-stretch sm:self-auto flex items-center justify-center">
+                            Clase de Lunes / Martes
+                        </div>
+                    </div>
+
+                    <button id="btn-save-full-form" onclick="guardarFormularioCompleto()" class="w-full lg:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2 shrink-0">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Guardar Formulario Completo</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                                <i class="fa-solid fa-user-check text-brand-600 mr-2"></i> Asistencia de Alumnos
+                            </h3>
+                            <span class="text-xs text-slate-400 font-medium">Marcado = Presente</span>
+                        </div>
+
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-2.5 px-3">Alumno</th>
+                                        <th class="py-2.5 px-3">Maestro Asignado</th>
+                                        <th class="py-2.5 px-3 text-center">Asistencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tracker-students-tbody" class="divide-y divide-slate-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
+                                <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                                    <i class="fa-solid fa-chalkboard-user text-indigo-600 mr-2"></i> Asistencia Maestros
+                                </h3>
+                                <span class="text-xs text-slate-400 font-medium">Docentes del nivel</span>
+                            </div>
+                            <div id="tracker-teachers-list" class="space-y-2">
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-book-bookmark text-amber-600 mr-2"></i> Registro de Clase / Avance
+                            </h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tema Impartido</label>
+                                    <input type="text" id="bitacora-tema" placeholder="Ej. Sílabas ma, me, mi" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Actividades Realizadas</label>
+                                    <textarea id="bitacora-actividades" rows="2" placeholder="Ej. Ejercicios de trazo en libreta..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tarea Asignada</label>
+                                    <input type="text" id="bitacora-tarea" placeholder="Ej. Recortar palabras de periódico..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: NOTAS DE ALUMNOS -->
+            <div id="tab-grades" class="tab-content hidden flex-1 flex flex-col space-y-6">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nivel:</label>
+                            <select id="grades-level-select" onchange="cargarMatrizNotas()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                                <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
+                                <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
+                                <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
+                                <option value="Avanzado (Nivel 3)">Avanzado (Nivel 3)</option>
+                                <option value="Tercer Ciclo (Nivel 4)">Tercer Ciclo (Nivel 4)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Módulo / Asignatura:</label>
+                            <div class="flex items-center space-x-1">
+                                <select id="grades-module-select" onchange="cargarMatrizNotas()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </select>
+                                <button onclick="editarModuloActual()" id="btn-edit-module" title="Editar nombre de este módulo" class="role-leader-only p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg text-xs transition-colors">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="eliminarModuloActual()" id="btn-delete-module" title="Eliminar este módulo" class="role-leader-only p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg text-xs transition-colors">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                                <button onclick="crearNuevoModulo()" id="btn-add-module" title="Crear nuevo módulo" class="role-leader-only p-2 text-brand-600 hover:bg-brand-50 rounded-lg text-xs transition-colors font-semibold">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
+                        <button onclick="openAddEvaluationModal()" id="btn-add-eval" class="role-leader-only bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-2 px-4 rounded-xl text-xs transition-all border border-indigo-200 flex items-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nueva Tarea/Evaluación</span>
+                        </button>
+                        <button id="btn-save-grades" onclick="guardarNotas()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-5 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Guardar Calificaciones</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-table-cells text-brand-600 mr-2"></i> Planilla de Calificaciones del Nivel
+                        </h3>
+                        <span class="text-xs text-slate-400">Escala de 0 a 10</span>
+                    </div>
+
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr id="grades-table-header" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th class="py-3 px-4">Alumno</th>
+                                    <th class="py-3 px-4 text-center">Promedio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grades-table-body" class="divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: MÓDULO DE INFORMES -->
+            <div id="tab-reports" class="tab-content hidden flex-1 flex flex-col space-y-6">
+                <!-- Filtros del Informe -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nivel Académico:</label>
+                            <select id="report-level-select" onchange="generarInformes()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                                <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
+                                <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
+                                <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
+                                <option value="Avanzado (Nivel 3)">Avanzado (Nivel 3)</option>
+                                <option value="Tercer Ciclo (Nivel 4)">Tercer Ciclo (Nivel 4)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Módulo para Notas:</label>
+                            <select id="report-module-select" onchange="generarInformes()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
+                        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Imprimir / Exportar PDF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Area Imprimible de Informes -->
+                <div class="print-area space-y-6">
+                    
+                    <!-- Tarjetas Resumen (KPIs) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Alumnos / Maestros</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-total-students">0 / 0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Clases Impartidas</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-total-classes">0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-chalkboard"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">% Asistencia Alumnos</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-avg-attendance">0%</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Nota Promedio Nivel</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-avg-grade">0.0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- REPORTE 1: ASISTENCIAS DE ALUMNOS POR NIVEL -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                                <i class="fa-solid fa-calendar-check text-brand-600 mr-2"></i> Reporte Consolidado de Asistencia - Alumnos
+                            </h3>
+                            <span class="text-xs text-slate-400" id="report-attendance-subtitle">Evaluación de asistencias</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-3 px-4">Alumno</th>
+                                        <th class="py-3 px-4">Maestro Responsable</th>
+                                        <th class="py-3 px-4 text-center">Clases Asistidas</th>
+                                        <th class="py-3 px-4 text-center">% Asistencia</th>
+                                        <th class="py-3 px-4 text-right">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-attendance-tbody" class="divide-y divide-slate-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- REPORTE 2: ASISTENCIAS DE MAESTROS POR NIVEL -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                                <i class="fa-solid fa-user-tie text-indigo-600 mr-2"></i> Reporte Consolidado de Asistencia - Maestros
+                            </h3>
+                            <span class="text-xs text-slate-400" id="report-teachers-subtitle">Asistencia de docentes</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-3 px-4">Maestro</th>
+                                        <th class="py-3 px-4">Rol en el Nivel</th>
+                                        <th class="py-3 px-4 text-center">Clases Asistidas</th>
+                                        <th class="py-3 px-4 text-center">% Asistencia</th>
+                                        <th class="py-3 px-4 text-right">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-teachers-tbody" class="divide-y divide-slate-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- REPORTE 3: NOTAS / CALIFICACIONES POR NIVEL -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                                <i class="fa-solid fa-square-poll-vertical text-purple-600 mr-2"></i> Reporte Consolidado de Calificaciones
+                            </h3>
+                            <span class="text-xs text-slate-400" id="report-grades-subtitle">Escala 0.0 - 10.0</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr id="report-grades-header" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-3 px-4">Alumno</th>
+                                        <th class="py-3 px-4 text-center">Promedio</th>
+                                        <th class="py-3 px-4 text-right">Estatus</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-grades-tbody" class="divide-y divide-slate-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 2: STUDENTS -->
+            <div id="tab-students" class="tab-content hidden flex-1 flex flex-col space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="relative w-full sm:w-80">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="student-search" oninput="renderStudentsTable()" placeholder="Buscar por nombre, documento o dirección..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                    </div>
+                    <button onclick="openAddStudentModal()" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Nuevo Alumno</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th class="py-3 px-4">Alumno</th>
+                                    <th class="py-3 px-4">Contacto / Cédula</th>
+                                    <th class="py-3 px-4">Dirección</th>
+                                    <th class="py-3 px-4">Maestro Responsable</th>
+                                    <th class="py-3 px-4">Nivel Alfabetización</th>
+                                    <th class="py-3 px-4 text-center">Adjuntos</th>
+                                    <th class="py-3 px-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-table-body" class="divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TEACHERS -->
+            <div id="tab-teachers" class="tab-content hidden flex-1 flex flex-col space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="relative w-full sm:w-80">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="teacher-search" oninput="renderTeachersTable()" placeholder="Buscar por nombre, DUI o dirección..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                    </div>
+                    <button onclick="openAddTeacherModal()" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Nuevo Maestro</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th class="py-3 px-4">Maestro</th>
+                                    <th class="py-3 px-4">DUI / Contacto</th>
+                                    <th class="py-3 px-4">Dirección</th>
+                                    <th class="py-3 px-4">Nivel Asignado</th>
+                                    <th class="py-3 px-4">Rol en Nivel</th>
+                                    <th class="py-3 px-4 text-center">DUI Adjunto</th>
+                                    <th class="py-3 px-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teachers-table-body" class="divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: DOCUMENTS -->
+            <div id="tab-documents" class="tab-content hidden flex-1 flex flex-col space-y-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h3 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-folder-open text-brand-600 mr-2"></i> Expedientes y Documentos de Alumnos</h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="documents-grid">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: CREAR NUEVA ACTIVIDAD / EVALUACIÓN -->
+    <div id="evaluation-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900">Agregar Nueva Actividad</h3>
+                <button onclick="closeModal('evaluation-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="evaluation-form" onsubmit="handleEvaluationSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre de la Actividad / Tarea *</label>
+                    <input type="text" id="eval-nombre" required placeholder="Ej. Tarea 1, Examen Parcial" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Actividad</label>
+                    <select id="eval-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="Tarea">Tarea / Ejercicio</option>
+                        <option value="Actividad">Actividad Corta</option>
+                        <option value="Examen">Examen / Evaluación</option>
+                        <option value="Proyecto">Proyecto Final</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha</label>
+                    <input type="date" id="eval-fecha" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('evaluation-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Agregar Columna</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTRAR / EDITAR ALUMNO -->
+    <div id="student-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900" id="student-modal-title">Registrar Nuevo Alumno</h3>
+                <button onclick="closeModal('student-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="student-form" onsubmit="handleStudentSubmit(event)" class="space-y-4">
+                <input type="hidden" id="student-id">
+
+                <div class="flex items-center space-x-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="w-14 h-14 rounded-full bg-slate-200 border-2 border-brand-500 flex items-center justify-center overflow-hidden shrink-0">
+                        <i class="fa-solid fa-user text-xl text-slate-400" id="icon-foto-default"></i>
+                        <img id="preview-foto" class="w-full h-full object-cover hidden" alt="Foto perfil">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Fotografía del Alumno</label>
+                        <input type="file" id="student-foto" accept="image/*" onchange="previsualizarFoto(event)" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nombres *</label>
+                        <input type="text" id="student-nombres" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Apellidos *</label>
+                        <input type="text" id="student-apellidos" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Documento / Cédula / DUI</label>
+                        <input type="text" id="student-dni" placeholder="00000000-0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono</label>
+                        <input type="text" id="student-phone" placeholder="7000-0000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dirección</label>
+                    <input type="text" id="student-direccion" placeholder="Calle / Av. / Colonia / Comunidad..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Edad</label>
+                        <input type="number" id="student-age" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nivel Alfabetización</label>
+                        <select id="student-level" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                            <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
+                            <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
+                            <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
+                            <option value="Avanzado (Nivel 3)">Avanzado (Nivel 3)</option>
+                            <option value="Tercer Ciclo (Nivel 4)">Tercer Ciclo (Nivel 4)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Maestro Responsable *</label>
+                        <select id="student-maestro" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="">Cargando maestros...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 pt-3">
+                    <h4 class="text-xs font-bold text-slate-800 mb-2 flex items-center space-x-1">
+                        <i class="fa-solid fa-paperclip text-brand-600"></i>
+                        <span>Adjuntar Documentos Personales</span>
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <label class="block font-semibold text-slate-700 mb-1">DUI / Cédula</label>
+                            <input type="file" id="file-dui" accept="image/*,.pdf" class="w-full text-slate-500 text-[10px]">
+                        </div>
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <label class="block font-semibold text-slate-700 mb-1">Partida Nacimiento</label>
+                            <input type="file" id="file-partida" accept="image/*,.pdf" class="w-full text-slate-500 text-[10px]">
+                        </div>
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <label class="block font-semibold text-slate-700 mb-1">Certificados / Otros</label>
+                            <input type="file" id="file-certificado" accept="image/*,.pdf" class="w-full text-slate-500 text-[10px]">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('student-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" id="btn-submit-student" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Guardar Alumno</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTRAR / EDITAR MAESTRO -->
+    <div id="teacher-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900" id="teacher-modal-title">Registrar Nuevo Maestro</h3>
+                <button onclick="closeModal('teacher-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="teacher-form" onsubmit="handleTeacherSubmit(event)" class="space-y-4">
+                <input type="hidden" id="teacher-id">
+
+                <div class="flex items-center space-x-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="w-14 h-14 rounded-full bg-slate-200 border-2 border-brand-500 flex items-center justify-center overflow-hidden shrink-0">
+                        <i class="fa-solid fa-chalkboard-user text-xl text-slate-400" id="icon-teacher-foto-default"></i>
+                        <img id="preview-teacher-foto" class="w-full h-full object-cover hidden" alt="Foto Maestro">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Fotografía del Maestro</label>
+                        <input type="file" id="teacher-foto" accept="image/*" onchange="previsualizarFotoMaestro(event)" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre Completo *</label>
+                        <input type="text" id="teacher-nombre" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">DUI *</label>
+                        <input type="text" id="teacher-dui" placeholder="00000000-0" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono</label>
+                        <input type="text" id="teacher-phone" placeholder="7000-0000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Correo Electrónico *</label>
+                        <input type="email" id="teacher-email" required placeholder="maestro@correo.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dirección Residencial</label>
+                    <input type="text" id="teacher-direccion" placeholder="Calle / Av. / Colonia / Municipio..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div id="teacher-password-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-teacher-pass">Contraseña *</label>
+                        <input type="password" id="teacher-password" placeholder="••••••••" minlength="6" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Confirmar Contraseña</label>
+                        <input type="password" id="teacher-password-confirm" placeholder="••••••••" minlength="6" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nivel Asignado</label>
+                        <select id="teacher-nivel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
+                            <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
+                            <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
+                            <option value="Avanzado (Nivel 3)">Avanzado (Nivel 3)</option>
+                            <option value="Tercer Ciclo (Nivel 4)">Tercer Ciclo (Nivel 4)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Rol en el Nivel *</label>
+                        <select id="teacher-rol" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Líder de nivel">Líder de nivel</option>
+                            <option value="Sublíder">Sublíder</option>
+                            <option value="Colaborador">Colaborador</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 pt-3">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Copia de DUI (Imagen o PDF)</label>
+                    <input type="file" id="teacher-dui-file" accept="image/*,.pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('teacher-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" id="btn-submit-teacher" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Guardar Maestro</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script>
+        // CONFIGURACIÓN DE PARÁMETROS Y SUPABASE
+        const CONFIG = {
+            SUPABASE_URL: "https://cegulltqwhgovouncvfc.supabase.co",
+            SUPABASE_KEY: "sb_publishable_H5f5I2xa7o--Mun2VOvtAw_ziWidTDB"
+        };
+
+        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+
+        let state = { 
+            students: [], 
+            teachers: [], 
+            countAsistencias: 0, 
+            modulesList: ["Lectoescritura", "Matemáticas Básicas", "Ciencias y Entorno"],
+            currentEvaluations: ["Tarea 1", "Tarea 2", "Examen Parcial"],
+            currentUser: {
+                email: "",
+                rol: "Administrador", 
+                nivelAsignado: null
+            }
+        };
+
+        window.onload = async function() {
+            document.getElementById('tracker-date-select').valueAsDate = new Date();
+            validarFechaLunesMartes();
+
+            poblarSelectModulos();
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            gestionarEstadoSesion(session);
+
+            supabaseClient.auth.onAuthStateChange((_event, session) => {
+                gestionarEstadoSesion(session);
+            });
+        };
+
+        async function gestionarEstadoSesion(session) {
+            const loginContainer = document.getElementById('login-container');
+            const appContainer = document.getElementById('app-container');
+            const userBadge = document.getElementById('user-email-badge');
+
+            if (session) {
+                loginContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                if (userBadge) {
+                    userBadge.textContent = session.user.email;
+                    userBadge.classList.remove('hidden');
+                }
+
+                await identificarRolUsuario(session.user.email);
+                await cargarDatos();
+            } else {
+                loginContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            }
+        }
+
+        async function identificarRolUsuario(email) {
+            state.currentUser.email = email;
+
+            if (email === 'carlosnec@gmail.com') {
+                state.currentUser.rol = 'Administrador';
+                state.currentUser.nivelAsignado = null;
+            } else {
+                const { data } = await supabaseClient
+                    .from('maestros')
+                    .select('rol_nivel, nivel')
+                    .eq('email', email)
+                    .maybeSingle();
+
+                if (data) {
+                    state.currentUser.rol = data.rol_nivel || 'Colaborador';
+                    state.currentUser.nivelAsignado = data.nivel || 'Inicial (Nivel 0)';
+                } else {
+                    state.currentUser.rol = 'Colaborador';
+                    state.currentUser.nivelAsignado = 'Inicial (Nivel 0)';
+                }
+            }
+
+            aplicarPermisosEnInterfaz();
+        }
+
+        function aplicarPermisosEnInterfaz() {
+            const roleBadge = document.getElementById('user-role-badge');
+            if (roleBadge) {
+                if (state.currentUser.rol === 'Administrador') {
+                    roleBadge.textContent = `Rol: Administrador (Todos los Niveles)`;
+                } else {
+                    roleBadge.textContent = `Rol: ${state.currentUser.rol} (${state.currentUser.nivelAsignado})`;
+                }
+                roleBadge.classList.remove('hidden');
+            }
+
+            const rol = state.currentUser.rol;
+            const userNivel = state.currentUser.nivelAsignado;
+
+            // 1. Pestaña Maestro solo visible para Administrador
+            const navTeachers = document.getElementById('nav-teachers');
+            if (navTeachers) {
+                if (rol === 'Administrador') navTeachers.classList.remove('hidden');
+                else navTeachers.classList.add('hidden');
+            }
+
+            // 2. Pestaña Informes oculta para Sublíder y Colaborador
+            const navReports = document.getElementById('nav-reports');
+            if (navReports) {
+                if (rol === 'Sublíder' || rol === 'Colaborador') navReports.classList.add('hidden');
+                else navReports.classList.remove('hidden');
+            }
+
+            // 3. Botones de gestión de módulos/evaluaciones (Líder o Admin)
+            const roleLeaderElems = document.querySelectorAll('.role-leader-only');
+            roleLeaderElems.forEach(el => {
+                if (rol === 'Administrador' || rol === 'Líder de nivel') {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            // 4. Bloqueo estricto de Nivel para no Administradores
+            const selTracker = document.getElementById('tracker-level-select');
+            const selGrades = document.getElementById('grades-level-select');
+            const selReport = document.getElementById('report-level-select');
+
+            if (rol !== 'Administrador' && userNivel) {
+                if (selTracker) {
+                    selTracker.value = userNivel;
+                    selTracker.disabled = true;
+                }
+                if (selGrades) {
+                    selGrades.value = userNivel;
+                    selGrades.disabled = true;
+                }
+                if (selReport) {
+                    selReport.value = userNivel;
+                    selReport.disabled = true;
+                }
+            } else {
+                if (selTracker) selTracker.disabled = false;
+                if (selGrades) selGrades.disabled = false;
+                if (selReport) selReport.disabled = false;
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+            const btn = document.getElementById('btn-login');
+
+            errorDiv.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Accediendo...`;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                errorDiv.textContent = 'Error al ingresar: Credenciales incorrectas o usuario no registrado.';
+                errorDiv.classList.remove('hidden');
+            } else {
+                showToast('¡Bienvenido al sistema!');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Iniciar Sesión</span>`;
+        }
+
+        async function handleLogout() {
+            if (confirm('¿Desea cerrar la sesión actual?')) {
+                await supabaseClient.auth.signOut();
+                showToast('Sesión cerrada correctamente');
+            }
+        }
+
+        async function cargarDatos() {
+            await cargarMaestros();
+            await cargarAlumnos();
+            await cargarAsistenciasCount();
+            renderDashboard();
+        }
+
+        async function cargarMaestros() {
+            const { data, error } = await supabaseClient.from('maestros').select('*').order('nombre', { ascending: true });
+            if (!error && data) {
+                state.teachers = data;
+                renderTeachersTable();
+                poblarSelectMaestros();
+            }
+        }
+
+        function poblarSelectMaestros() {
+            const select = document.getElementById('student-maestro');
+            if (!select) return;
+            
+            const lideres = state.teachers.filter(m => m.rol_nivel === 'Líder de nivel');
+
+            if (lideres.length === 0) {
+                select.innerHTML = '<option value="">No hay líderes de nivel registrados</option>';
+                return;
+            }
+
+            select.innerHTML = '<option value="">-- Seleccionar Maestro --</option>' + 
+                lideres.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
+        }
+
+        async function cargarAlumnos() {
+            const { data, error } = await supabaseClient.from('alumnos').select('*').order('id', { ascending: false });
+            if (!error && data) {
+                state.students = data;
+                renderStudentsTable();
+                renderDocumentsGrid();
+            }
+        }
+
+        async function cargarAsistenciasCount() {
+            const { count, error } = await supabaseClient.from('asistencia').select('*', { count: 'exact', head: true });
+            if (!error && count !== null) {
+                state.countAsistencias = count;
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-white', 'text-brand-700', 'shadow-sm');
+                el.classList.add('text-slate-600', 'hover:text-slate-900');
+            });
+
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('nav-' + tabId);
+            activeBtn.classList.remove('text-slate-600', 'hover:text-slate-900');
+            activeBtn.classList.add('bg-white', 'text-brand-700', 'shadow-sm');
+
+            if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'level-tracker') cargarSeguimientoNivel();
+            if (tabId === 'grades') cargarMatrizNotas();
+            if (tabId === 'reports') generarInformes();
+            if (tabId === 'students') renderStudentsTable();
+            if (tabId === 'teachers') renderTeachersTable();
+            if (tabId === 'documents') renderDocumentsGrid();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs font-semibold text-white flex items-center space-x-2 ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                const form = modal.querySelector('form');
+                if (form) form.reset();
+            }
+        }
+
+        function validarFechaLunesMartes() {
+            const inputFecha = document.getElementById('tracker-date-select');
+            const badge = document.getElementById('tracker-day-badge');
+            if (!inputFecha.value) return;
+
+            const dateParts = inputFecha.value.split('-');
+            const fechaObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            const dayNum = fechaObj.getDay();
+
+            if (dayNum === 1) {
+                badge.textContent = "Clase de Lunes";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 self-stretch sm:self-auto flex items-center justify-center";
+            } else if (dayNum === 2) {
+                badge.textContent = "Clase de Martes";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 self-stretch sm:self-auto flex items-center justify-center";
+            } else {
+                badge.textContent = "Día fuera de horario (Solo Lunes/Martes)";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 self-stretch sm:self-auto flex items-center justify-center";
+            }
+        }
+
+        // -------------------------------------------------------------
+        // LÓGICA MÓDULO DE NOTAS: GESTIÓN DE MÓDULOS Y EVALUACIONES
+        // -------------------------------------------------------------
+        
+        function poblarSelectModulos() {
+            const selects = [
+                document.getElementById('grades-module-select'),
+                document.getElementById('report-module-select')
+            ];
+            
+            selects.forEach(select => {
+                if (!select) return;
+                const currentVal = select.value;
+                select.innerHTML = state.modulesList.map(m => `<option value="${m}">${m}</option>`).join('');
+                if (currentVal && state.modulesList.includes(currentVal)) {
+                    select.value = currentVal;
+                }
+            });
+        }
+
+        function crearNuevoModulo() {
+            if (state.currentUser.rol === 'Colaborador' || state.currentUser.rol === 'Sublíder') {
+                showToast('No tienes permisos para crear módulos', 'error');
+                return;
+            }
+            const nuevoModulo = prompt("Ingresa el nombre del nuevo Módulo / Asignatura:");
+            if (nuevoModulo && nuevoModulo.trim() !== "") {
+                const nombreLimpio = nuevoModulo.trim();
+                if (!state.modulesList.includes(nombreLimpio)) {
+                    state.modulesList.push(nombreLimpio);
+                    poblarSelectModulos();
+                    document.getElementById('grades-module-select').value = nombreLimpio;
+                    cargarMatrizNotas();
+                    showToast(`Módulo "${nombreLimpio}" creado`);
+                } else {
+                    showToast("Ese módulo ya existe", "error");
+                }
+            }
+        }
+
+        async function editarModuloActual() {
+            if (state.currentUser.rol === 'Colaborador' || state.currentUser.rol === 'Sublíder') {
+                showToast('No tienes permisos para editar módulos', 'error');
+                return;
+            }
+            const select = document.getElementById('grades-module-select');
+            const moduloActual = select.value;
+            if (!moduloActual) return;
+
+            const nuevoNombre = prompt("Nuevo nombre para el módulo:", moduloActual);
+            if (nuevoNombre && nuevoNombre.trim() !== "" && nuevoNombre !== moduloActual) {
+                const nombreLimpio = nuevoNombre.trim();
+
+                const { error } = await supabaseClient
+                    .from('calificaciones')
+                    .update({ modulo: nombreLimpio })
+                    .eq('modulo', moduloActual);
+
+                if (error) {
+                    showToast('Error al actualizar módulo en Supabase: ' + error.message, 'error');
+                } else {
+                    const idx = state.modulesList.indexOf(moduloActual);
+                    if (idx !== -1) state.modulesList[idx] = nombreLimpio;
+                    poblarSelectModulos();
+                    select.value = nombreLimpio;
+                    cargarMatrizNotas();
+                    showToast('Nombre de módulo actualizado');
+                }
+            }
+        }
+
+        async function eliminarModuloActual() {
+            if (state.currentUser.rol === 'Colaborador' || state.currentUser.rol === 'Sublíder') {
+                showToast('No tienes permisos para eliminar módulos', 'error');
+                return;
+            }
+            const select = document.getElementById('grades-module-select');
+            const moduloActual = select.value;
+            if (!moduloActual) return;
+
+            if (confirm(`¿Seguro que deseas eliminar el módulo "${moduloActual}"? Se borrarán sus calificaciones en Supabase.`)) {
+                const { error } = await supabaseClient
+                    .from('calificaciones')
+                    .delete()
+                    .eq('modulo', moduloActual);
+
+                if (!error) {
+                    state.modulesList = state.modulesList.filter(m => m !== moduloActual);
+                    if (state.modulesList.length === 0) {
+                        state.modulesList = ["General"];
+                    }
+                    poblarSelectModulos();
+                    cargarMatrizNotas();
+                    showToast(`Módulo "${moduloActual}" eliminado`);
+                } else {
+                    showToast('Error al eliminar módulo: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function editarEvaluacion(nombreEval) {
+            if (state.currentUser.rol === 'Colaborador' || state.currentUser.rol === 'Sublíder') {
+                showToast('No tienes permisos para editar evaluaciones', 'error');
+                return;
+            }
+            const nuevoNombre = prompt("Nuevo nombre para la tarea / evaluación:", nombreEval);
+            if (nuevoNombre && nuevoNombre.trim() !== "" && nuevoNombre !== nombreEval) {
+                const nombreLimpio = nuevoNombre.trim();
+                const modulo = document.getElementById('grades-module-select').value;
+
+                const { error } = await supabaseClient
+                    .from('calificaciones')
+                    .update({ evaluacion: nombreLimpio })
+                    .eq('modulo', modulo)
+                    .eq('evaluacion', nombreEval);
+
+                if (error) {
+                    showToast('Error al renombrar evaluación: ' + error.message, 'error');
+                } else {
+                    const idx = state.currentEvaluations.indexOf(nombreEval);
+                    if (idx !== -1) state.currentEvaluations[idx] = nombreLimpio;
+                    cargarMatrizNotas();
+                    showToast('Evaluación renombrada');
+                }
+            }
+        }
+
+        async function eliminarEvaluacion(nombreEval) {
+            if (state.currentUser.rol === 'Colaborador' || state.currentUser.rol === 'Sublíder') {
+                showToast('No tienes permisos para eliminar evaluaciones', 'error');
+                return;
+            }
+            if (confirm(`¿Seguro que deseas eliminar "${nombreEval}" y sus notas asociadas?`)) {
+                const modulo = document.getElementById('grades-module-select').value;
+
+                const { error } = await supabaseClient
+                    .from('calificaciones')
+                    .delete()
+                    .eq('modulo', modulo)
+                    .eq('evaluacion', nombreEval);
+
+                if (!error) {
+                    state.currentEvaluations = state.currentEvaluations.filter(e => e !== nombreEval);
+                    cargarMatrizNotas();
+                    showToast(`Tarea "${nombreEval}" eliminada`);
+                } else {
+                    showToast('Error al eliminar tarea: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function cargarMatrizNotas() {
+            const nivel = document.getElementById('grades-level-select').value;
+            const modulo = document.getElementById('grades-module-select').value;
+
+            const alumnosNivel = state.students.filter(s => s.nivel === nivel);
+
+            const { data: notasDB } = await supabaseClient
+                .from('calificaciones')
+                .select('*')
+                .eq('modulo', modulo);
+
+            const evaluacionesUnicas = new Set(state.currentEvaluations);
+            if (notasDB) {
+                notasDB.forEach(n => evaluacionesUnicas.add(n.evaluacion));
+            }
+            const evalList = Array.from(evaluacionesUnicas);
+
+            const mapNotas = {};
+            if (notasDB) {
+                notasDB.forEach(n => {
+                    if (!mapNotas[n.alumno_id]) mapNotas[n.alumno_id] = {};
+                    mapNotas[n.alumno_id][n.evaluacion] = n.nota;
+                });
+            }
+
+            const headerRow = document.getElementById('grades-table-header');
+            headerRow.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600">Alumno</th>`;
+            
+            const canEdit = state.currentUser.rol === 'Administrador' || state.currentUser.rol === 'Líder de nivel';
+
+            evalList.forEach(ev => {
+                headerRow.innerHTML += `
+                    <th class="py-3 px-3 text-center font-semibold text-slate-600 group relative">
+                        <div class="flex items-center justify-center space-x-1">
+                            <span>${ev}</span>
+                            ${canEdit ? `
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 ml-1">
+                                <button onclick="editarEvaluacion('${ev}')" title="Editar Tarea" class="text-blue-600 hover:text-blue-800 text-[10px]">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="eliminarEvaluacion('${ev}')" title="Eliminar Tarea" class="text-red-600 hover:text-red-800 text-[10px]">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>` : ''}
+                        </div>
+                    </th>
+                `;
+            });
+            headerRow.innerHTML += `<th class="py-3 px-4 text-center font-bold text-brand-700">Promedio</th>`;
+
+            const tbody = document.getElementById('grades-table-body');
+            tbody.innerHTML = '';
+
+            if (alumnosNivel.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${evalList.length + 2}" class="py-8 text-center text-slate-400 text-sm">No hay alumnos registrados en ${nivel}</td></tr>`;
+                return;
+            }
+
+            alumnosNivel.forEach(s => {
+                let inputsHtml = '';
+                evalList.forEach(ev => {
+                    const valNota = (mapNotas[s.id] && mapNotas[s.id][ev] !== undefined && mapNotas[s.id][ev] !== null) ? mapNotas[s.id][ev] : '';
+                    inputsHtml += `
+                        <td class="py-2.5 px-2 text-center">
+                            <input type="number" step="0.1" min="0" max="10" 
+                                data-alumno-id="${s.id}" 
+                                data-evaluacion="${ev}" 
+                                value="${valNota}" 
+                                oninput="calcularPromedioFila(this)" 
+                                placeholder="-" 
+                                class="grade-input w-16 bg-slate-50 border border-slate-200 text-center rounded-lg py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                        </td>
+                    `;
+                });
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-all" id="student-row-${s.id}">
+                        <td class="py-3 px-4 font-semibold text-slate-900">${s.nombres} ${s.apellidos}</td>
+                        ${inputsHtml}
+                        <td class="py-3 px-4 text-center">
+                            <span class="row-promedio font-bold text-sm text-brand-700 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">-</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            alumnosNivel.forEach(s => {
+                const fila = document.getElementById(`student-row-${s.id}`);
+                if (fila) {
+                    const primerInput = fila.querySelector('.grade-input');
+                    if (primerInput) calcularPromedioFila(primerInput);
+                }
+            });
+        }
+
+        function calcularPromedioFila(inputElem) {
+            const fila = inputElem.closest('tr');
+            const inputs = fila.querySelectorAll('.grade-input');
+            let suma = 0;
+            let contador = 0;
+
+            inputs.forEach(i => {
+                const val = parseFloat(i.value);
+                if (!isNaN(val)) {
+                    suma += val;
+                    contador++;
+                }
+            });
+
+            const badgePromedio = fila.querySelector('.row-promedio');
+            if (contador > 0) {
+                const prom = (suma / contador).toFixed(1);
+                badgePromedio.textContent = prom;
+                if (prom >= 6.0) {
+                    badgePromedio.className = "row-promedio font-bold text-sm text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200";
+                } else {
+                    badgePromedio.className = "row-promedio font-bold text-sm text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200";
+                }
+            } else {
+                badgePromedio.textContent = "-";
+                badgePromedio.className = "row-promedio font-bold text-sm text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200";
+            }
+        }
+
+        function openAddEvaluationModal() {
+            if (state.currentUser.rol === 'Colaborador' || state.currentUser.rol === 'Sublíder') {
+                showToast('No tienes permisos para agregar actividades', 'error');
+                return;
+            }
+            document.getElementById('evaluation-form')?.reset();
+            document.getElementById('eval-fecha').valueAsDate = new Date();
+            document.getElementById('evaluation-modal').classList.remove('hidden');
+        }
+
+        function handleEvaluationSubmit(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('eval-nombre').value.trim();
+            if (nombre && !state.currentEvaluations.includes(nombre)) {
+                state.currentEvaluations.push(nombre);
+            }
+            closeModal('evaluation-modal');
+            cargarMatrizNotas();
+            showToast('Actividad agregada a la planilla');
+        }
+
+        async function guardarNotas() {
+            const btn = document.getElementById('btn-save-grades');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Guardando...</span>`;
+
+            try {
+                const modulo = document.getElementById('grades-module-select').value;
+                const inputs = document.querySelectorAll('.grade-input');
+                const registros = [];
+
+                inputs.forEach(inp => {
+                    const val = inp.value !== '' ? parseFloat(inp.value) : null;
+                    if (val !== null) {
+                        registros.push({
+                            alumno_id: parseInt(inp.getAttribute('data-alumno-id'), 10),
+                            modulo: modulo,
+                            evaluacion: inp.getAttribute('data-evaluacion'),
+                            nota: val,
+                            fecha: new Date().toISOString().split('T')[0]
+                        });
+                    }
+                });
+
+                if (registros.length === 0) {
+                    showToast('No hay calificaciones escritas para guardar', 'error');
+                    return;
+                }
+
+                const { error } = await supabaseClient.from('calificaciones').upsert(registros, { onConflict: 'alumno_id,modulo,evaluacion' });
+
+                if (error) {
+                    throw error;
+                }
+
+                showToast('¡Calificaciones e historial guardados con éxito!');
+            } catch (err) {
+                console.error(err);
+                showToast('Error al guardar notas: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // -------------------------------------------------------------
+        // LÓGICA DEL MÓDULO DE INFORMES / REPORTES
+        // -------------------------------------------------------------
+        async function generarInformes() {
+            const nivel = document.getElementById('report-level-select').value;
+            const modulo = document.getElementById('report-module-select').value || state.modulesList[0];
+
+            document.getElementById('report-attendance-subtitle').textContent = `Filtro: ${nivel}`;
+            document.getElementById('report-teachers-subtitle').textContent = `Filtro: ${nivel}`;
+            document.getElementById('report-grades-subtitle').textContent = `Filtro: ${nivel} | Módulo: ${modulo}`;
+
+            const alumnosNivel = state.students.filter(s => s.nivel === nivel);
+            const maestrosNivel = state.teachers.filter(m => m.nivel === nivel);
+
+            document.getElementById('report-stat-total-students').textContent = `${alumnosNivel.length} / ${maestrosNivel.length}`;
+
+            // A) REPORTE ASISTENCIA ALUMNOS
+            if (alumnosNivel.length === 0) {
+                document.getElementById('report-attendance-tbody').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${nivel}</td></tr>`;
+            } else {
+                const idsAlumnos = alumnosNivel.map(s => String(s.id));
+                const { data: asistencias } = await supabaseClient
+                    .from('asistencia')
+                    .select('*')
+                    .in('alumno_id', idsAlumnos);
+
+                const fechasUnicas = new Set();
+                const mapaAsistencias = {};
+
+                if (asistencias) {
+                    asistencias.forEach(a => {
+                        fechasUnicas.add(a.fecha);
+                        if (!mapaAsistencias[a.alumno_id]) {
+                            mapaAsistencias[a.alumno_id] = { total: 0, asistio: 0 };
+                        }
+                        mapaAsistencias[a.alumno_id].total++;
+                        if (a.presente) mapaAsistencias[a.alumno_id].asistio++;
+                    });
+                }
+
+                const totalClases = fechasUnicas.size;
+                document.getElementById('report-stat-total-classes').textContent = totalClases;
+
+                const tbodyAtt = document.getElementById('report-attendance-tbody');
+                tbodyAtt.innerHTML = '';
+                let sumaPorcentajesAtt = 0;
+
+                alumnosNivel.forEach(s => {
+                    const infoAtt = mapaAsistencias[s.id] || { total: totalClases, asistio: 0 };
+                    const cAsistidas = infoAtt.asistio;
+                    const pct = totalClases > 0 ? Math.round((cAsistidas / totalClases) * 100) : 0;
+                    sumaPorcentajesAtt += pct;
+
+                    let badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    let estadoTxt = 'Excelente';
+
+                    if (pct < 60) {
+                        badgeColor = 'bg-red-50 text-red-700 border-red-200';
+                        estadoTxt = 'Crítico';
+                    } else if (pct < 80) {
+                        badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        estadoTxt = 'Regular';
+                    }
+
+                    tbodyAtt.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-3 px-4 font-semibold text-slate-800">${s.nombres} ${s.apellidos}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500">${s.maestro_responsable || 'No asignado'}</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-700">${cAsistidas} / ${totalClases}</td>
+                            <td class="py-3 px-4 text-center font-extrabold text-sm">${pct}%</td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${badgeColor}">${estadoTxt}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                const avgAttGlobal = alumnosNivel.length > 0 ? Math.round(sumaPorcentajesAtt / alumnosNivel.length) : 0;
+                document.getElementById('report-stat-avg-attendance').textContent = `${avgAttGlobal}%`;
+            }
+
+            // B) REPORTE ASISTENCIA MAESTROS
+            const tbodyTeachers = document.getElementById('report-teachers-tbody');
+            tbodyTeachers.innerHTML = '';
+
+            if (maestrosNivel.length === 0) {
+                tbodyTeachers.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay maestros asignados a ${nivel}</td></tr>`;
+            } else {
+                const idsMaestros = maestrosNivel.map(m => String(m.id));
+                const { data: asistenciasMaestros } = await supabaseClient
+                    .from('asistencia_maestros')
+                    .select('*')
+                    .in('maestro_id', idsMaestros);
+
+                const fechasUnicasM = new Set();
+                const mapaAsistenciasM = {};
+
+                if (asistenciasMaestros) {
+                    asistenciasMaestros.forEach(a => {
+                        fechasUnicasM.add(a.fecha);
+                        if (!mapaAsistenciasM[a.maestro_id]) {
+                            mapaAsistenciasM[a.maestro_id] = { total: 0, asistio: 0 };
+                        }
+                        mapaAsistenciasM[a.maestro_id].total++;
+                        if (a.presente) mapaAsistenciasM[a.maestro_id].asistio++;
+                    });
+                }
+
+                const totalClasesM = fechasUnicasM.size;
+
+                maestrosNivel.forEach(m => {
+                    const infoAtt = mapaAsistenciasM[m.id] || { total: totalClasesM, asistio: 0 };
+                    const cAsistidas = infoAtt.asistio;
+                    const pct = totalClasesM > 0 ? Math.round((cAsistidas / totalClasesM) * 100) : 0;
+
+                    let badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    let estadoTxt = 'Excelente';
+
+                    if (pct < 60) {
+                        badgeColor = 'bg-red-50 text-red-700 border-red-200';
+                        estadoTxt = 'Irregular';
+                    } else if (pct < 80) {
+                        badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        estadoTxt = 'Aceptable';
+                    }
+
+                    tbodyTeachers.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-3 px-4 font-semibold text-slate-800">${m.nombre}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500">${m.rol_nivel || 'Docente'}</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-700">${cAsistidas} / ${totalClasesM}</td>
+                            <td class="py-3 px-4 text-center font-extrabold text-sm">${pct}%</td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${badgeColor}">${estadoTxt}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // C) REPORTE NOTAS
+            if (alumnosNivel.length === 0) {
+                document.getElementById('report-stat-avg-grade').textContent = '0.0';
+                document.getElementById('report-grades-tbody').innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${nivel}</td></tr>`;
+            } else {
+                const { data: calificaciones } = await supabaseClient
+                    .from('calificaciones')
+                    .select('*')
+                    .eq('modulo', modulo);
+
+                const evalsModulo = new Set();
+                const mapaNotas = {};
+
+                if (calificaciones) {
+                    calificaciones.forEach(c => {
+                        evalsModulo.add(c.evaluacion);
+                        if (!mapaNotas[c.alumno_id]) mapaNotas[c.alumno_id] = {};
+                        mapaNotas[c.alumno_id][c.evaluacion] = c.nota;
+                    });
+                }
+
+                const evalList = Array.from(evalsModulo);
+
+                const headerGrades = document.getElementById('report-grades-header');
+                headerGrades.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600">Alumno</th>`;
+                evalList.forEach(ev => {
+                    headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600">${ev}</th>`;
+                });
+                headerGrades.innerHTML += `
+                    <th class="py-3 px-4 text-center font-bold text-indigo-700">Promedio</th>
+                    <th class="py-3 px-4 text-right font-bold text-slate-600">Estatus</th>
+                `;
+
+                const tbodyGrades = document.getElementById('report-grades-tbody');
+                tbodyGrades.innerHTML = '';
+
+                let sumaPromediosGeneral = 0;
+                let totalAlumnosConNotas = 0;
+
+                alumnosNivel.forEach(s => {
+                    let colNotasHtml = '';
+                    let sumaAlumno = 0;
+                    let contAlumno = 0;
+
+                    evalList.forEach(ev => {
+                        const val = (mapaNotas[s.id] && mapaNotas[s.id][ev] !== undefined) ? mapaNotas[s.id][ev] : null;
+                        if (val !== null) {
+                            sumaAlumno += parseFloat(val);
+                            contAlumno++;
+                            colNotasHtml += `<td class="py-3 px-3 text-center font-medium text-slate-700">${parseFloat(val).toFixed(1)}</td>`;
+                        } else {
+                            colNotasHtml += `<td class="py-3 px-3 text-center text-slate-300">-</td>`;
+                        }
+                    });
+
+                    let promedioTxt = '-';
+                    let statusBadge = `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-xs font-semibold">Sin Evaluaciones</span>`;
+
+                    if (contAlumno > 0) {
+                        const prom = (sumaAlumno / contAlumno);
+                        promedioTxt = prom.toFixed(1);
+                        sumaPromediosGeneral += prom;
+                        totalAlumnosConNotas++;
+
+                        if (prom >= 6.0) {
+                            statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold">Aprobado</span>`;
+                        } else {
+                            statusBadge = `<span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-bold">Reprobado</span>`;
+                        }
+                    }
+
+                    tbodyGrades.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-3 px-4 font-semibold text-slate-800">${s.nombres} ${s.apellidos}</td>
+                            ${colNotasHtml}
+                            <td class="py-3 px-4 text-center font-extrabold text-sm text-indigo-700">${promedioTxt}</td>
+                            <td class="py-3 px-4 text-right">${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+
+                const promGlobal = totalAlumnosConNotas > 0 ? (sumaPromediosGeneral / totalAlumnosConNotas).toFixed(1) : '0.0';
+                document.getElementById('report-stat-avg-grade').textContent = promGlobal;
+            }
+        }
+
+        async function cargarSeguimientoNivel() {
+            const nivelSeleccionado = document.getElementById('tracker-level-select').value;
+            const fecha = document.getElementById('tracker-date-select').value;
+
+            // --- A) ALUMNOS ---
+            const alumnosNivel = state.students.filter(s => s.nivel === nivelSeleccionado);
+            const tbodyAlumnos = document.getElementById('tracker-students-tbody');
+            tbodyAlumnos.innerHTML = '';
+
+            const { data: asistenciasAlumnos } = await supabaseClient
+                .from('asistencia')
+                .select('*')
+                .eq('fecha', fecha);
+
+            const mapAsistenciaAlumnos = {};
+            if (asistenciasAlumnos) {
+                asistenciasAlumnos.forEach(a => mapAsistenciaAlumnos[a.alumno_id] = a.presente);
+            }
+
+            if (alumnosNivel.length === 0) {
+                tbodyAlumnos.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${nivelSeleccionado}</td></tr>`;
+            } else {
+                alumnosNivel.forEach(s => {
+                    const isChecked = mapAsistenciaAlumnos[s.id] === true ? 'checked' : '';
+                    tbodyAlumnos.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">${s.nombres} ${s.apellidos}</td>
+                            <td class="py-2.5 px-3 text-xs text-slate-500">${s.maestro_responsable || 'No asignado'}</td>
+                            <td class="py-2.5 px-3 text-center">
+                                <input type="checkbox" data-alumno-id="${s.id}" ${isChecked} class="student-checkbox w-5 h-5 text-brand-600 rounded focus:ring-brand-500 border-slate-300">
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // --- B) MAESTROS ---
+            const maestrosNivel = state.teachers.filter(m => m.nivel === nivelSeleccionado);
+            const containerMaestros = document.getElementById('tracker-teachers-list');
+            containerMaestros.innerHTML = '';
+
+            const { data: asistenciasMaestros } = await supabaseClient
+                .from('asistencia_maestros')
+                .select('*')
+                .eq('fecha', fecha);
+
+            const mapAsistenciaMaestros = {};
+            if (asistenciasMaestros) {
+                asistenciasMaestros.forEach(m => mapAsistenciaMaestros[m.maestro_id] = m.presente);
+            }
+
+            if (maestrosNivel.length === 0) {
+                containerMaestros.innerHTML = `<p class="text-xs text-slate-400 py-2">No hay maestros asignados a este nivel.</p>`;
+            } else {
+                maestrosNivel.forEach(m => {
+                    const isChecked = mapAsistenciaMaestros[m.id] === true ? 'checked' : '';
+                    containerMaestros.innerHTML += `
+                        <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                            <div>
+                                <div class="font-bold text-slate-800">${m.nombre}</div>
+                                <div class="text-[10px] text-slate-400">${m.rol_nivel || 'Docente'}</div>
+                            </div>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <span class="text-slate-500 font-medium">Asistió</span>
+                                <input type="checkbox" data-maestro-id="${m.id}" ${isChecked} class="teacher-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                            </label>
+                        </div>
+                    `;
+                });
+            }
+
+            // --- C) BITÁCORA DE CLASE ---
+            const { data: bitacora } = await supabaseClient
+                .from('bitacora_clases')
+                .select('*')
+                .eq('nivel', nivelSeleccionado)
+                .eq('fecha', fecha)
+                .limit(1);
+
+            if (bitacora && bitacora.length > 0) {
+                document.getElementById('bitacora-tema').value = bitacora[0].tema_impartido || bitacora[0].tema || '';
+                document.getElementById('bitacora-actividades').value = bitacora[0].actividades || '';
+                document.getElementById('bitacora-tarea').value = bitacora[0].tarea || '';
+            } else {
+                document.getElementById('bitacora-tema').value = '';
+                document.getElementById('bitacora-actividades').value = '';
+                document.getElementById('bitacora-tarea').value = '';
+            }
+        }
+
+        async function guardarFormularioCompleto() {
+            const btn = document.getElementById('btn-save-full-form');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Guardando Todo...</span>`;
+
+            try {
+                const nivel = document.getElementById('tracker-level-select').value;
+                const fecha = document.getElementById('tracker-date-select').value;
+
+                if (!fecha) {
+                    showToast('Por favor selecciona una fecha válida', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                    return;
+                }
+
+                // 1. Guardar Asistencia Alumnos (Upsert)
+                const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+                const registrosAlumnos = [];
+                studentCheckboxes.forEach(cb => {
+                    registrosAlumnos.push({
+                        alumno_id: String(cb.getAttribute('data-alumno-id')),
+                        fecha: fecha,
+                        presente: cb.checked
+                    });
+                });
+
+                if (registrosAlumnos.length > 0) {
+                    const { error: errAlumnos } = await supabaseClient.from('asistencia').upsert(registrosAlumnos, { onConflict: 'alumno_id,fecha' });
+                    if (errAlumnos) throw new Error('Asistencia alumnos: ' + errAlumnos.message);
+                }
+
+                // 2. Guardar Asistencia Maestros (Upsert)
+                const teacherCheckboxes = document.querySelectorAll('.teacher-checkbox');
+                const registrosMaestros = [];
+                teacherCheckboxes.forEach(cb => {
+                    registrosMaestros.push({
+                        maestro_id: String(cb.getAttribute('data-maestro-id')),
+                        fecha: fecha,
+                        presente: cb.checked
+                    });
+                });
+
+                if (registrosMaestros.length > 0) {
+                    const { error: errMaestros } = await supabaseClient.from('asistencia_maestros').upsert(registrosMaestros, { onConflict: 'maestro_id,fecha' });
+                    if (errMaestros) throw new Error('Asistencia maestros: ' + errMaestros.message);
+                }
+
+                // 3. Guardar Bitácora de Clases (Upsert)
+                const tema = document.getElementById('bitacora-tema').value;
+                const actividades = document.getElementById('bitacora-actividades').value;
+                const tarea = document.getElementById('bitacora-tarea').value;
+
+                const payloadBitacora = {
+                    nivel: nivel,
+                    fecha: fecha,
+                    tema_impartido: tema,
+                    actividades: actividades,
+                    tarea: tarea
+                };
+
+                const { error: errBitacora } = await supabaseClient
+                    .from('bitacora_clases')
+                    .upsert(payloadBitacora, { onConflict: 'nivel,fecha' });
+
+                if (errBitacora) throw new Error('Bitácora: ' + errBitacora.message);
+
+                showToast('¡Planilla del nivel guardada exitosamente!');
+                cargarAsistenciasCount();
+
+            } catch (err) {
+                console.error(err);
+                showToast('Error al guardar: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        }
+
+        function previsualizarFoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-foto').src = e.target.result;
+                    document.getElementById('preview-foto').classList.remove('hidden');
+                    document.getElementById('icon-foto-default').classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previsualizarFotoMaestro(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-teacher-foto').src = e.target.result;
+                    document.getElementById('preview-teacher-foto').classList.remove('hidden');
+                    document.getElementById('icon-teacher-foto-default').classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function subirArchivoSupabase(inputFileElement, carpeta) {
+            const file = inputFileElement.files[0];
+            if (!file) return null;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${carpeta}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+            const { data, error } = await supabaseClient.storage
+                .from('documentos_alumnos')
+                .upload(fileName, file);
+
+            if (error) {
+                console.error('Error al subir archivo:', error);
+                return null;
+            }
+
+            const { data: publicUrlData } = supabaseClient.storage
+                .from('documentos_alumnos')
+                .getPublicUrl(fileName);
+
+            return publicUrlData.publicUrl;
+        }
+
+        function renderDashboard() {
+            const rol = state.currentUser.rol;
+            const userNivel = state.currentUser.nivelAsignado;
+
+            let alumnosFiltrados = state.students;
+            if (rol !== 'Administrador' && userNivel) {
+                alumnosFiltrados = state.students.filter(s => s.nivel === userNivel);
+            }
+
+            document.getElementById('stat-total-students').textContent = alumnosFiltrados.length;
+            document.getElementById('stat-avg-attendance').textContent = state.countAsistencias;
+            
+            const nivel0Count = alumnosFiltrados.filter(s => s.nivel && s.nivel.includes('Nivel 0')).length;
+            document.getElementById('stat-nivel0').textContent = nivel0Count;
+
+            const docsCount = alumnosFiltrados.filter(s => s.dui_url || s.partida_url || s.certificado_url).length;
+            document.getElementById('stat-total-docs').textContent = docsCount;
+
+            const tbody = document.getElementById('dashboard-students-list');
+            tbody.innerHTML = '';
+            const recent = alumnosFiltrados.slice(0, 5);
+            if (recent.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400 text-xs">No hay alumnos registrados.</td></tr>`;
+                return;
+            }
+            recent.forEach(s => {
+                const avatar = s.foto_url 
+                    ? `<img src="${s.foto_url}" class="w-7 h-7 rounded-full object-cover">`
+                    : `<div class="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs">${s.nombres ? s.nombres[0] : 'A'}</div>`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80">
+                        <td class="py-3 font-medium text-slate-900 flex items-center space-x-2">
+                            ${avatar}
+                            <span>${s.nombres} ${s.apellidos}</span>
+                        </td>
+                        <td class="py-3 text-slate-500">${s.maestro_responsable || 'No asignado'}</td>
+                        <td class="py-3"><span class="px-2.5 py-1 bg-brand-50 text-brand-700 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
+                        <td class="py-3 text-right">
+                            <button onclick="switchTab('students')" class="text-brand-600 hover:text-brand-800 text-xs font-semibold">Ver <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderStudentsTable() {
+            const search = (document.getElementById('student-search') ? document.getElementById('student-search').value : '').toLowerCase();
+            const tbody = document.getElementById('students-table-body');
+            tbody.innerHTML = '';
+
+            const rol = state.currentUser.rol;
+            const userNivel = state.currentUser.nivelAsignado;
+
+            // Filtro por Rol y Nivel
+            let alumnosPermitidos = state.students;
+            if (rol !== 'Administrador' && userNivel) {
+                alumnosPermitidos = state.students.filter(s => s.nivel === userNivel);
+            }
+
+            const filtered = alumnosPermitidos.filter(s => 
+                `${s.nombres} ${s.apellidos}`.toLowerCase().includes(search) || 
+                (s.documento && s.documento.toLowerCase().includes(search)) ||
+                (s.direccion && s.direccion.toLowerCase().includes(search)) ||
+                (s.maestro_responsable && s.maestro_responsable.toLowerCase().includes(search))
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">No se encontraron alumnos.</td></tr>`;
+                return;
+            }
+
+            const canDelete = rol === 'Administrador' || rol === 'Líder de nivel';
+
+            filtered.forEach(s => {
+                const avatar = s.foto_url 
+                    ? `<img src="${s.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200">`
+                    : `<div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs border border-brand-200">${s.nombres ? s.nombres[0] : 'A'}</div>`;
+
+                const docsIcons = `
+                    <div class="flex justify-center space-x-2 text-sm">
+                        ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" title="DUI" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-id-card"></i></a>` : ''}
+                        ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" title="Partida" class="text-emerald-600 hover:text-emerald-800"><i class="fa-solid fa-file-contract"></i></a>` : ''}
+                        ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" title="Certificado" class="text-amber-600 hover:text-amber-800"><i class="fa-solid fa-award"></i></a>` : ''}
+                        ${!s.dui_url && !s.partida_url && !s.certificado_url ? `<span class="text-xs text-slate-300">-</span>` : ''}
+                    </div>
+                `;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-all">
+                        <td class="py-3 px-4 flex items-center space-x-3">
+                            ${avatar}
+                            <div>
+                                <div class="font-bold text-slate-900">${s.nombres} ${s.apellidos}</div>
+                                <div class="text-xs text-slate-400">${s.edad ? s.edad + ' años' : 'Edad S/D'}</div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="text-slate-800 font-medium text-xs">${s.documento || 'Sin Documento'}</div>
+                            <div class="text-xs text-slate-400">${s.telefono || 'Sin Teléfono'}</div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-700 text-xs">${s.direccion || 'Sin Dirección'}</td>
+                        <td class="py-3 px-4 text-slate-700 font-medium text-xs">${s.maestro_responsable || 'No asignado'}</td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-1 bg-brand-50 text-brand-700 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
+                        <td class="py-3 px-4 text-center">${docsIcons}</td>
+                        <td class="py-3 px-4 text-right space-x-1">
+                            <button onclick="editStudent(${s.id})" title="Editar Alumno" class="text-slate-500 hover:text-brand-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+                            ${canDelete ? `<button onclick="deleteStudent(${s.id})" title="Eliminar Alumno" class="text-slate-500 hover:text-red-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openAddStudentModal() {
+            document.getElementById('student-form').reset();
+            document.getElementById('student-id').value = '';
+            document.getElementById('student-direccion').value = '';
+            document.getElementById('student-foto').value = '';
+            document.getElementById('preview-foto').src = '';
+            document.getElementById('preview-foto').classList.add('hidden');
+            document.getElementById('icon-foto-default').classList.remove('hidden');
+            poblarSelectMaestros();
+
+            const selectLevel = document.getElementById('student-level');
+            if (state.currentUser.rol !== 'Administrador' && state.currentUser.nivelAsignado) {
+                selectLevel.value = state.currentUser.nivelAsignado;
+                selectLevel.disabled = true;
+            } else {
+                selectLevel.disabled = false;
+            }
+
+            document.getElementById('student-modal-title').textContent = 'Registrar Nuevo Alumno';
+            document.getElementById('student-modal').classList.remove('hidden');
+        }
+
+        function editStudent(id) {
+            const student = state.students.find(s => s.id === id);
+            if (!student) return;
+
+            document.getElementById('student-id').value = student.id;
+            document.getElementById('student-nombres').value = student.nombres || '';
+            document.getElementById('student-apellidos').value = student.apellidos || '';
+            document.getElementById('student-dni').value = student.documento || '';
+            document.getElementById('student-phone').value = student.telefono || '';
+            document.getElementById('student-direccion').value = student.direccion || '';
+            document.getElementById('student-age').value = student.edad || '';
+
+            const selectLevel = document.getElementById('student-level');
+            selectLevel.value = student.nivel || 'Inicial (Nivel 0)';
+            if (state.currentUser.rol !== 'Administrador' && state.currentUser.nivelAsignado) {
+                selectLevel.disabled = true;
+            } else {
+                selectLevel.disabled = false;
+            }
+            
+            poblarSelectMaestros();
+            document.getElementById('student-maestro').value = student.maestro_responsable || '';
+
+            document.getElementById('student-foto').value = '';
+
+            if (student.foto_url) {
+                document.getElementById('preview-foto').src = student.foto_url;
+                document.getElementById('preview-foto').classList.remove('hidden');
+                document.getElementById('icon-foto-default').classList.add('hidden');
+            } else {
+                document.getElementById('preview-foto').src = '';
+                document.getElementById('preview-foto').classList.add('hidden');
+                document.getElementById('icon-foto-default').classList.remove('hidden');
+            }
+
+            document.getElementById('student-modal-title').textContent = 'Modificar Datos del Alumno';
+            document.getElementById('student-modal').classList.remove('hidden');
+        }
+
+        async function handleStudentSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-student');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+            try {
+                const idInput = document.getElementById('student-id').value;
+                const studentExistente = idInput ? state.students.find(s => s.id === parseInt(idInput, 10)) : null;
+
+                const fotoUrlNueva = await subirArchivoSupabase(document.getElementById('student-foto'), 'fotos');
+                const duiUrlNuevo = await subirArchivoSupabase(document.getElementById('file-dui'), 'duis');
+                const partidaUrlNueva = await subirArchivoSupabase(document.getElementById('file-partida'), 'partidas');
+                const certificadoUrlNuevo = await subirArchivoSupabase(document.getElementById('file-certificado'), 'certificados');
+
+                const selectLevel = document.getElementById('student-level');
+
+                const payload = {
+                    nombres: document.getElementById('student-nombres').value,
+                    apellidos: document.getElementById('student-apellidos').value,
+                    documento: document.getElementById('student-dni').value,
+                    telefono: document.getElementById('student-phone').value,
+                    direccion: document.getElementById('student-direccion').value,
+                    edad: document.getElementById('student-age').value ? parseInt(document.getElementById('student-age').value, 10) : null,
+                    nivel: selectLevel.value,
+                    maestro_responsable: document.getElementById('student-maestro').value,
+                    foto_url: fotoUrlNueva || (studentExistente ? studentExistente.foto_url : null),
+                    dui_url: duiUrlNuevo || (studentExistente ? studentExistente.dui_url : null),
+                    partida_url: partidaUrlNueva || (studentExistente ? studentExistente.partida_url : null),
+                    certificado_url: certificadoUrlNuevo || (studentExistente ? studentExistente.certificado_url : null)
+                };
+
+                let error;
+                if (idInput) {
+                    const res = await supabaseClient.from('alumnos').update(payload).eq('id', parseInt(idInput, 10));
+                    error = res.error;
+                } else {
+                    const res = await supabaseClient.from('alumnos').insert([payload]);
+                    error = res.error;
+                }
+
+                if (error) {
+                    showToast('Error al guardar: ' + error.message, 'error');
+                } else {
+                    showToast(idInput ? 'Alumno actualizado con éxito' : 'Alumno guardado con éxito');
+                    closeModal('student-modal');
+                    await cargarAlumnos();
+                }
+            } catch (err) {
+                showToast('Error inesperado al subir archivos', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Guardar Alumno</span>`;
+            }
+        }
+
+        async function deleteStudent(id) {
+            if (state.currentUser.rol === 'Colaborador' || state.currentUser.rol === 'Sublíder') {
+                showToast('No tienes permisos para eliminar alumnos', 'error');
+                return;
+            }
+            if (confirm('¿Desea eliminar este alumno de la base de datos?')) {
+                const { error } = await supabaseClient.from('alumnos').delete().eq('id', id);
+                if (error) showToast('Error al eliminar', 'error');
+                else {
+                    showToast('Alumno eliminado');
+                    cargarAlumnos();
+                }
+            }
+        }
+
+        function renderTeachersTable() {
+            const search = (document.getElementById('teacher-search') ? document.getElementById('teacher-search').value : '').toLowerCase();
+            const tbody = document.getElementById('teachers-table-body');
+            tbody.innerHTML = '';
+
+            const filtered = state.teachers.filter(m => 
+                (m.nombre && m.nombre.toLowerCase().includes(search)) || 
+                (m.dui && m.dui.toLowerCase().includes(search)) ||
+                (m.direccion && m.direccion.toLowerCase().includes(search))
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">No hay maestros registrados.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(m => {
+                const avatar = m.foto_url 
+                    ? `<img src="${m.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200">`
+                    : `<div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs border border-brand-200">${m.nombre ? m.nombre[0] : 'M'}</div>`;
+
+                const rolColor = m.rol_nivel === 'Líder de nivel' ? 'bg-purple-100 text-purple-800' :
+                                 m.rol_nivel === 'Sublíder' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-all">
+                        <td class="py-3 px-4 flex items-center space-x-3">
+                            ${avatar}
+                            <div>
+                                <div class="font-bold text-slate-900">${m.nombre}</div>
+                                <div class="text-xs text-slate-400">${m.email || 'Sin Correo'}</div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="text-slate-800 font-medium text-xs">${m.dui || 'Sin DUI'}</div>
+                            <div class="text-xs text-slate-400">${m.telefono || 'Sin Teléfono'}</div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-700 text-xs">${m.direccion || 'Sin Dirección'}</td>
+                        <td class="py-3 px-4 text-slate-700 font-medium text-xs">${m.nivel || 'Sin Asignar'}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2.5 py-1 ${rolColor} rounded-lg text-xs font-semibold">${m.rol_nivel || 'Colaborador'}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            ${m.dui_adjunto_url ? `<a href="${m.dui_adjunto_url}" target="_blank" class="text-brand-600 hover:text-brand-800 text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>Ver DUI</a>` : '<span class="text-slate-300 text-xs">-</span>'}
+                        </td>
+                        <td class="py-3 px-4 text-right space-x-1">
+                            <button onclick="editTeacher('${m.id}')" class="text-slate-500 hover:text-brand-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteTeacher('${m.id}')" class="text-slate-500 hover:text-red-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openAddTeacherModal() {
+            if (state.currentUser.rol !== 'Administrador') {
+                showToast('Solo el Administrador puede agregar maestros', 'error');
+                return;
+            }
+            document.getElementById('teacher-form').reset();
+            document.getElementById('teacher-id').value = '';
+            document.getElementById('teacher-direccion').value = '';
+            document.getElementById('teacher-foto').value = '';
+            document.getElementById('preview-teacher-foto').src = '';
+            document.getElementById('preview-teacher-foto').classList.add('hidden');
+            document.getElementById('icon-teacher-foto-default').classList.remove('hidden');
+            
+            document.getElementById('label-teacher-pass').textContent = 'Contraseña *';
+            document.getElementById('teacher-password').required = true;
+
+            document.getElementById('teacher-modal-title').textContent = 'Registrar Nuevo Maestro';
+            document.getElementById('teacher-modal').classList.remove('hidden');
+        }
+
+        function editTeacher(id) {
+            const m = state.teachers.find(item => item.id == id);
+            if (!m) return;
+
+            document.getElementById('teacher-id').value = m.id;
+            document.getElementById('teacher-nombre').value = m.nombre || '';
+            document.getElementById('teacher-dui').value = m.dui || '';
+            document.getElementById('teacher-phone').value = m.telefono || '';
+            document.getElementById('teacher-email').value = m.email || '';
+            document.getElementById('teacher-direccion').value = m.direccion || '';
+            document.getElementById('teacher-nivel').value = m.nivel || 'Inicial (Nivel 0)';
+            document.getElementById('teacher-rol').value = m.rol_nivel || 'Colaborador';
+
+            document.getElementById('label-teacher-pass').textContent = 'Nueva Contraseña (Opcional)';
+            document.getElementById('teacher-password').required = false;
+            document.getElementById('teacher-password').value = '';
+            document.getElementById('teacher-password-confirm').value = '';
+
+            if (m.foto_url) {
+                document.getElementById('preview-teacher-foto').src = m.foto_url;
+                document.getElementById('preview-teacher-foto').classList.remove('hidden');
+                document.getElementById('icon-teacher-foto-default').classList.add('hidden');
+            } else {
+                document.getElementById('preview-teacher-foto').src = '';
+                document.getElementById('preview-teacher-foto').classList.add('hidden');
+                document.getElementById('icon-teacher-foto-default').classList.remove('hidden');
+            }
+
+            document.getElementById('teacher-modal-title').textContent = 'Modificar Datos del Maestro';
+            document.getElementById('teacher-modal').classList.remove('hidden');
+        }
+
+        async function handleTeacherSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-teacher');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+            try {
+                const idInput = document.getElementById('teacher-id').value;
+                const mExistente = idInput ? state.teachers.find(item => item.id == idInput) : null;
+
+                const email = document.getElementById('teacher-email').value;
+                const password = document.getElementById('teacher-password').value;
+                const passwordConfirm = document.getElementById('teacher-password-confirm').value;
+
+                if (password || !idInput) {
+                    if (!password || password.length < 6) {
+                        showToast('La contraseña debe tener al menos 6 caracteres', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Guardar Maestro</span>`;
+                        return;
+                    }
+                    if (password !== passwordConfirm) {
+                        showToast('Las contraseñas no coinciden', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Guardar Maestro</span>`;
+                        return;
+                    }
+                }
+
+                if (!idInput) {
+                    const tempAuthClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY, {
+                        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+                    });
+                    const { data: authData, error: authError } = await tempAuthClient.auth.signUp({
+                        email: email,
+                        password: password
+                    });
+
+                    if (authError) {
+                        showToast('Error al crear cuenta en Supabase: ' + authError.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Guardar Maestro</span>`;
+                        return;
+                    }
+                } else if (password) {
+                    const { error: passError } = await supabaseClient.auth.updateUser({ password: password });
+                    if (passError) {
+                        showToast('Aviso sobre la contraseña: ' + passError.message, 'error');
+                    } else {
+                        showToast('Contraseña actualizada en la autenticación de Supabase');
+                    }
+                }
+
+                const fotoUrlNueva = await subirArchivoSupabase(document.getElementById('teacher-foto'), 'maestros_fotos');
+                const duiUrlNuevo = await subirArchivoSupabase(document.getElementById('teacher-dui-file'), 'maestros_duis');
+
+                const payload = {
+                    nombre: document.getElementById('teacher-nombre').value,
+                    dui: document.getElementById('teacher-dui').value,
+                    telefono: document.getElementById('teacher-phone').value,
+                    email: email,
+                    direccion: document.getElementById('teacher-direccion').value,
+                    nivel: document.getElementById('teacher-nivel').value,
+                    rol_nivel: document.getElementById('teacher-rol').value,
+                    foto_url: fotoUrlNueva || (mExistente ? mExistente.foto_url : null),
+                    dui_adjunto_url: duiUrlNuevo || (mExistente ? mExistente.dui_adjunto_url : null)
+                };
+
+                let error;
+                if (idInput) {
+                    const res = await supabaseClient.from('maestros').update(payload).eq('id', idInput);
+                    error = res.error;
+                } else {
+                    const res = await supabaseClient.from('maestros').insert([payload]);
+                    error = res.error;
+                }
+
+                if (error) {
+                    showToast('Error al guardar maestro en la base de datos: ' + error.message, 'error');
+                } else {
+                    showToast(idInput ? 'Maestro y credenciales actualizados' : 'Maestro y usuario registrados con éxito');
+                    closeModal('teacher-modal');
+                    await cargarMaestros();
+                }
+            } catch (err) {
+                showToast('Error inesperado al procesar los datos', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Guardar Maestro</span>`;
+            }
+        }
+
+        async function deleteTeacher(id) {
+            if (state.currentUser.rol !== 'Administrador') {
+                showToast('Solo el Administrador puede eliminar maestros', 'error');
+                return;
+            }
+            if (confirm('¿Desea eliminar este maestro de la base de datos?')) {
+                const { error } = await supabaseClient.from('maestros').delete().eq('id', id);
+                if (error) showToast('Error al eliminar', 'error');
+                else {
+                    showToast('Maestro eliminado');
+                    cargarMaestros();
+                }
+            }
+        }
+
+        function renderDocumentsGrid() {
+            const grid = document.getElementById('documents-grid');
+            grid.innerHTML = '';
+
+            const rol = state.currentUser.rol;
+            const userNivel = state.currentUser.nivelAsignado;
+
+            let alumnosPermitidos = state.students;
+            if (rol !== 'Administrador' && userNivel) {
+                alumnosPermitidos = state.students.filter(s => s.nivel === userNivel);
+            }
+
+            const conDocumentos = alumnosPermitidos.filter(s => s.dui_url || s.partida_url || s.certificado_url || s.foto_url);
+
+            if (conDocumentos.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 text-sm">No se han adjuntado documentos aún en este nivel.</div>`;
+                return;
+            }
+
+            conDocumentos.forEach(s => {
+                grid.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-1">
+                                ${s.foto_url ? `<img src="${s.foto_url}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">${s.nombres ? s.nombres[0] : 'A'}</div>`}
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-sm">${s.nombres} ${s.apellidos}</h4>
+                                    <p class="text-xs text-slate-400">${s.maestro_responsable || 'Maestro no asignado'}</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${s.direccion || 'Sin dirección registrada'}</p>
+                            <div class="space-y-2 text-xs border-t border-slate-100 pt-3">
+                                ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-brand-50 text-slate-700"><span class="font-medium"><i class="fa-solid fa-id-card text-indigo-600 mr-2"></i>DUI / Cédula</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-brand-50 text-slate-700"><span class="font-medium"><i class="fa-solid fa-file-contract text-emerald-600 mr-2"></i>Partida Nacimiento</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-brand-50 text-slate-700"><span class="font-medium"><i class="fa-solid fa-award text-amber-600 mr-2"></i>Certificados</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
