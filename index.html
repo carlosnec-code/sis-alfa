@@ -34,7 +34,9 @@
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
+        .dark ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         @media print {
@@ -43,6 +45,7 @@
             }
             body {
                 background-color: #ffffff !important;
+                color: #000000 !important;
             }
             .print-area {
                 border: none !important;
@@ -52,39 +55,39 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-full flex flex-col">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-full flex flex-col transition-colors duration-200">
 
     <!-- SECCIÓN DE LOGIN -->
-    <div id="login-container" class="min-h-screen flex items-center justify-center bg-slate-100 p-4 w-full">
-        <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 w-full max-w-md">
+    <div id="login-container" class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4 w-full">
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 w-full max-w-md">
             <div class="text-center mb-6">
                 <img src="logo.png" alt="Logo Ministerio" class="w-20 h-20 mx-auto mb-3 object-contain rounded-full shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=Logo';">
-                <h2 class="text-xl font-bold text-slate-900">Ministerio de Alfabetización</h2>
-                <p class="text-xs text-slate-500">Ingresa tus credenciales para acceder</p>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Ministerio de Alfabetización</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Ingresa tus credenciales para acceder</p>
             </div>
 
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Correo Electrónico</label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Correo Electrónico</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                             <i class="fa-solid fa-envelope"></i>
                         </span>
-                        <input type="email" id="login-email" required placeholder="correo@ejemplo.com" class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <input type="email" id="login-email" required placeholder="correo@ejemplo.com" class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Contraseña</label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contraseña</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                             <i class="fa-solid fa-lock"></i>
                         </span>
-                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
 
-                <div id="login-error" class="hidden text-xs text-red-600 bg-red-50 border border-red-200 p-2.5 rounded-xl font-medium"></div>
+                <div id="login-error" class="hidden text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 p-2.5 rounded-xl font-medium"></div>
 
                 <button type="submit" id="btn-login" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-right-to-bracket"></i>
@@ -97,25 +100,30 @@
     <!-- ESTRUCTURA PRINCIPAL DE LA APP -->
     <div id="app-container" class="hidden h-full flex flex-col">
         <!-- App Header -->
-        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <img src="logo.png" alt="Logo Ministerio de Alfabetización" class="w-12 h-12 object-contain rounded-full shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Logo';">
                     <div>
-                        <h1 class="text-lg font-bold text-slate-900 leading-tight">Ministerio de Alfabetización</h1>
-                        <p class="text-xs text-slate-500">Gestión Integral de Adultos</p>
+                        <h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Ministerio de Alfabetización</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Gestión Integral de Adultos</p>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <div id="user-role-badge" class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 hidden sm:block">
+                    <!-- Botón de Modo Oscuro en Header -->
+                    <button onclick="toggleDarkMode()" title="Cambiar Tema" class="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm border border-slate-200 dark:border-slate-700 transition-colors">
+                        <i id="theme-toggle-icon" class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <div id="user-role-badge" class="text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800 hidden sm:block">
                         Rol: Administrador
                     </div>
 
-                    <div id="user-email-badge" class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 hidden sm:block">
+                    <div id="user-email-badge" class="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hidden sm:block">
                     </div>
 
-                    <button onclick="handleLogout()" title="Cerrar Sesión" class="h-9 w-9 rounded-full bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm border border-red-200 transition-colors">
+                    <button onclick="handleLogout()" title="Cerrar Sesión" class="h-9 w-9 rounded-full bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 flex items-center justify-center font-bold text-sm border border-red-200 dark:border-red-900 transition-colors">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
@@ -125,32 +133,32 @@
         <!-- Main Container -->
         <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
             <!-- Navigation Bar -->
-            <div class="tab-btn-container flex space-x-1 sm:space-x-2 bg-slate-200/70 p-1.5 rounded-2xl mb-6 overflow-x-auto">
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 bg-white text-brand-700 shadow-sm">
+            <div class="tab-btn-container flex space-x-1 sm:space-x-2 bg-slate-200/70 dark:bg-slate-800/70 p-1.5 rounded-2xl mb-6 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-500 shadow-sm">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Resumen</span>
                 </button>
-                <button onclick="switchTab('level-tracker')" id="nav-level-tracker" class="tab-btn flex-1 min-w-[130px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                <button onclick="switchTab('level-tracker')" id="nav-level-tracker" class="tab-btn flex-1 min-w-[130px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <i class="fa-solid fa-layer-group"></i>
                     <span>Seguimiento Nivel</span>
                 </button>
-                <button onclick="switchTab('grades')" id="nav-grades" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                <button onclick="switchTab('grades')" id="nav-grades" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Notas / Tareas</span>
                 </button>
-                <button onclick="switchTab('reports')" id="nav-reports" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                <button onclick="switchTab('reports')" id="nav-reports" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <i class="fa-solid fa-file-contract"></i>
                     <span>Informes</span>
                 </button>
-                <button onclick="switchTab('students')" id="nav-students" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                <button onclick="switchTab('students')" id="nav-students" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <i class="fa-solid fa-users"></i>
                     <span>Alumnos</span>
                 </button>
-                <button onclick="switchTab('teachers')" id="nav-teachers" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                <button onclick="switchTab('teachers')" id="nav-teachers" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Maestros</span>
                 </button>
-                <button onclick="switchTab('documents')" id="nav-documents" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900">
+                <button onclick="switchTab('documents')" id="nav-documents" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <i class="fa-solid fa-folder-open"></i>
                     <span>Documentos</span>
                 </button>
@@ -159,70 +167,79 @@
             <!-- TAB 1: DASHBOARD -->
             <div id="tab-dashboard" class="tab-content flex-1 flex flex-col space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Alumnos</p>
-                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-total-students">0</h3>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Alumnos</p>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-total-students">0</h3>
                         </div>
-                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">
                             <i class="fa-solid fa-user-graduate"></i>
                         </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Asistencias Tomadas</p>
-                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-avg-attendance">0</h3>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Asistencias Tomadas</p>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-avg-attendance">0</h3>
                         </div>
-                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl">
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-emerald-950 text-brand-600 dark:text-emerald-400 flex items-center justify-center text-xl">
                             <i class="fa-solid fa-calendar-check"></i>
                         </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Alumnos Nivel 0</p>
-                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-nivel0">0</h3>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Alumnos Nivel 0</p>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-nivel0">0</h3>
                         </div>
-                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl">
                             <i class="fa-solid fa-book-open"></i>
                         </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Con Documentos</p>
-                            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="stat-total-docs">0</h3>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Con Documentos</p>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-total-docs">0</h3>
                         </div>
-                        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                        <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl">
                             <i class="fa-solid fa-file-arrow-up"></i>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col">
-                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
-                            <i class="fa-solid fa-bolt text-brand-600 mr-2"></i> Alumnos Registrados Recientemente
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm lg:col-span-2 flex flex-col">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center">
+                            <i class="fa-solid fa-bolt text-brand-600 dark:text-brand-400 mr-2"></i> Alumnos Registrados Recientemente
                         </h3>
                         <div class="overflow-x-auto flex-1">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                    <tr class="border-b border-slate-100 dark:border-slate-700 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                         <th class="pb-3 font-medium">Alumno</th>
                                         <th class="pb-3 font-medium">Maestro Responsable</th>
                                         <th class="pb-3 font-medium">Nivel</th>
                                         <th class="pb-3 font-medium text-right">Acción</th>
                                     </tr>
                                 </thead>
-                                <tbody id="dashboard-students-list" class="divide-y divide-slate-100">
+                                <tbody id="dashboard-students-list" class="divide-y divide-slate-100 dark:divide-slate-700">
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
-                        <div class="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-2 rounded-xl text-xs font-semibold w-fit">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span id="db-status-text">Supabase Conectado</span>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 px-3 py-2 rounded-xl text-xs font-semibold w-fit">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span id="db-status-text">Supabase Conectado</span>
+                            </div>
+
+                            <!-- Interruptor Tema en Dashboard -->
+                            <button onclick="toggleDarkMode()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center space-x-1.5 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                <i id="theme-btn-icon" class="fa-solid fa-moon"></i>
+                                <span id="theme-btn-text">Modo Oscuro</span>
+                            </button>
                         </div>
+
                         <button onclick="switchTab('students'); openAddStudentModal();" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-user-plus"></i>
                             <span>Registrar Nuevo Alumno</span>
@@ -233,11 +250,11 @@
 
             <!-- TAB: SEGUIMIENTO POR NIVEL (FLUJO UNIFICADO) -->
             <div id="tab-level-tracker" class="tab-content hidden flex-1 flex flex-col space-y-6">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-4">
                     <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
                         <div class="w-full sm:w-auto">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Seleccionar Nivel:</label>
-                            <select id="tracker-level-select" onchange="cargarSeguimientoNivel()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Seleccionar Nivel:</label>
+                            <select id="tracker-level-select" onchange="cargarSeguimientoNivel()" class="w-full sm:w-auto bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400">
                                 <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
                                 <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
                                 <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
@@ -247,11 +264,11 @@
                         </div>
 
                         <div class="w-full sm:w-auto">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fecha de Clase:</label>
-                            <input type="date" id="tracker-date-select" onchange="validarFechaLunesMartes(); cargarSeguimientoNivel();" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Fecha de Clase:</label>
+                            <input type="date" id="tracker-date-select" onchange="validarFechaLunesMartes(); cargarSeguimientoNivel();" class="w-full sm:w-auto bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
 
-                        <div id="tracker-day-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 self-stretch sm:self-auto flex items-center justify-center">
+                        <div id="tracker-day-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 self-stretch sm:self-auto flex items-center justify-center">
                             Clase de Lunes / Martes
                         </div>
                     </div>
@@ -263,57 +280,57 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col">
-                        <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
-                                <i class="fa-solid fa-user-check text-brand-600 mr-2"></i> Asistencia de Alumnos
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm lg:col-span-2 flex flex-col">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-700 pb-3">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                                <i class="fa-solid fa-user-check text-brand-600 dark:text-brand-400 mr-2"></i> Asistencia de Alumnos
                             </h3>
-                            <span class="text-xs text-slate-400 font-medium">Marcado = Presente</span>
+                            <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Marcado = Presente</span>
                         </div>
 
                         <div class="overflow-x-auto flex-1">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         <th class="py-2.5 px-3">Alumno</th>
                                         <th class="py-2.5 px-3">Maestro Asignado</th>
                                         <th class="py-2.5 px-3 text-center">Asistencia</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tracker-students-tbody" class="divide-y divide-slate-100">
+                                <tbody id="tracker-students-tbody" class="divide-y divide-slate-100 dark:divide-slate-700">
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
                     <div class="space-y-6">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
-                                <h3 class="text-sm font-bold text-slate-900 flex items-center">
-                                    <i class="fa-solid fa-chalkboard-user text-indigo-600 mr-2"></i> Asistencia Maestros
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="flex justify-between items-center mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                                    <i class="fa-solid fa-chalkboard-user text-indigo-600 dark:text-indigo-400 mr-2"></i> Asistencia Maestros
                                 </h3>
-                                <span class="text-xs text-slate-400 font-medium">Docentes del nivel</span>
+                                <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Docentes del nivel</span>
                             </div>
                             <div id="tracker-teachers-list" class="space-y-2">
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center border-b border-slate-100 pb-2">
-                                <i class="fa-solid fa-book-bookmark text-amber-600 mr-2"></i> Registro de Clase / Avance
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center border-b border-slate-100 dark:border-slate-700 pb-2">
+                                <i class="fa-solid fa-book-bookmark text-amber-600 dark:text-amber-400 mr-2"></i> Registro de Clase / Avance
                             </h3>
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tema Impartido</label>
-                                    <input type="text" id="bitacora-tema" placeholder="Ej. Sílabas ma, me, mi" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Tema Impartido</label>
+                                    <input type="text" id="bitacora-tema" placeholder="Ej. Sílabas ma, me, mi" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Actividades Realizadas</label>
-                                    <textarea id="bitacora-actividades" rows="2" placeholder="Ej. Ejercicios de trazo en libreta..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Actividades Realizadas</label>
+                                    <textarea id="bitacora-actividades" rows="2" placeholder="Ej. Ejercicios de trazo en libreta..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tarea Asignada</label>
-                                    <input type="text" id="bitacora-tarea" placeholder="Ej. Recortar palabras de periódico..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Tarea Asignada</label>
+                                    <input type="text" id="bitacora-tarea" placeholder="Ej. Recortar palabras de periódico..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 </div>
                             </div>
                         </div>
@@ -323,11 +340,11 @@
 
             <!-- TAB: NOTAS DE ALUMNOS -->
             <div id="tab-grades" class="tab-content hidden flex-1 flex flex-col space-y-6">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nivel:</label>
-                            <select id="grades-level-select" onchange="cargarMatrizNotas()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nivel:</label>
+                            <select id="grades-level-select" onchange="cargarMatrizNotas()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400">
                                 <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
                                 <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
                                 <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
@@ -336,17 +353,17 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Módulo / Asignatura:</label>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Módulo / Asignatura:</label>
                             <div class="flex items-center space-x-1">
-                                <select id="grades-module-select" onchange="cargarMatrizNotas()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <select id="grades-module-select" onchange="cargarMatrizNotas()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 </select>
-                                <button onclick="editarModuloActual()" id="btn-edit-module" title="Editar nombre de este módulo" class="role-leader-only p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg text-xs transition-colors">
+                                <button onclick="editarModuloActual()" id="btn-edit-module" title="Editar nombre de este módulo" class="role-leader-only p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-xs transition-colors">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <button onclick="eliminarModuloActual()" id="btn-delete-module" title="Eliminar este módulo" class="role-leader-only p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg text-xs transition-colors">
+                                <button onclick="eliminarModuloActual()" id="btn-delete-module" title="Eliminar este módulo" class="role-leader-only p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg text-xs transition-colors">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
-                                <button onclick="crearNuevoModulo()" id="btn-add-module" title="Crear nuevo módulo" class="role-leader-only p-2 text-brand-600 hover:bg-brand-50 rounded-lg text-xs transition-colors font-semibold">
+                                <button onclick="crearNuevoModulo()" id="btn-add-module" title="Crear nuevo módulo" class="role-leader-only p-2 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-emerald-950 rounded-lg text-xs transition-colors font-semibold">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
@@ -354,7 +371,7 @@
                     </div>
 
                     <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
-                        <button onclick="openAddEvaluationModal()" id="btn-add-eval" class="role-leader-only bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-2 px-4 rounded-xl text-xs transition-all border border-indigo-200 flex items-center space-x-2">
+                        <button onclick="openAddEvaluationModal()" id="btn-add-eval" class="role-leader-only bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-semibold py-2 px-4 rounded-xl text-xs transition-all border border-indigo-200 dark:border-indigo-800 flex items-center space-x-2">
                             <i class="fa-solid fa-plus"></i>
                             <span>Nueva Tarea/Evaluación</span>
                         </button>
@@ -365,23 +382,23 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-                    <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 class="text-sm font-bold text-slate-900 flex items-center">
-                            <i class="fa-solid fa-table-cells text-brand-600 mr-2"></i> Planilla de Calificaciones del Nivel
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex-1 flex flex-col">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-table-cells text-brand-600 dark:text-brand-400 mr-2"></i> Planilla de Calificaciones del Nivel
                         </h3>
-                        <span class="text-xs text-slate-400">Escala de 0 a 10</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500">Escala de 0 a 10</span>
                     </div>
 
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr id="grades-table-header" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <tr id="grades-table-header" class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     <th class="py-3 px-4">Alumno</th>
                                     <th class="py-3 px-4 text-center">Promedio</th>
                                 </tr>
                             </thead>
-                            <tbody id="grades-table-body" class="divide-y divide-slate-100">
+                            <tbody id="grades-table-body" class="divide-y divide-slate-100 dark:divide-slate-700">
                             </tbody>
                         </table>
                     </div>
@@ -391,11 +408,11 @@
             <!-- TAB: MÓDULO DE INFORMES -->
             <div id="tab-reports" class="tab-content hidden flex-1 flex flex-col space-y-6">
                 <!-- Filtros del Informe -->
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 no-print">
                     <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nivel Académico:</label>
-                            <select id="report-level-select" onchange="generarInformes()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nivel Académico:</label>
+                            <select id="report-level-select" onchange="generarInformes()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-500">
                                 <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
                                 <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
                                 <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
@@ -404,14 +421,14 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Módulo para Notas:</label>
-                            <select id="report-module-select" onchange="generarInformes()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Módulo para Notas:</label>
+                            <select id="report-module-select" onchange="generarInformes()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                             </select>
                         </div>
                     </div>
 
                     <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
-                        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2">
+                        <button onclick="window.print()" class="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white font-semibold py-2 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2">
                             <i class="fa-solid fa-print"></i>
                             <span>Imprimir / Exportar PDF</span>
                         </button>
@@ -423,60 +440,60 @@
                     
                     <!-- Tarjetas Resumen (KPIs) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                             <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Alumnos / Maestros</p>
-                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-total-students">0 / 0</h3>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Alumnos / Maestros</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="report-stat-total-students">0 / 0</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">
                                 <i class="fa-solid fa-users"></i>
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                             <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Clases Impartidas</p>
-                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-total-classes">0</h3>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Clases Impartidas</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="report-stat-total-classes">0</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl">
                                 <i class="fa-solid fa-chalkboard"></i>
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                             <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">% Asistencia Alumnos</p>
-                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-avg-attendance">0%</h3>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">% Asistencia Alumnos</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="report-stat-avg-attendance">0%</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl">
                                 <i class="fa-solid fa-user-check"></i>
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
                             <div>
-                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Nota Promedio Nivel</p>
-                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="report-stat-avg-grade">0.0</h3>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nota Promedio Nivel</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="report-stat-avg-grade">0.0</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl">
                                 <i class="fa-solid fa-graduation-cap"></i>
                             </div>
                         </div>
                     </div>
 
                     <!-- REPORTE 1: ASISTENCIAS DE ALUMNOS POR NIVEL -->
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
-                                <i class="fa-solid fa-calendar-check text-brand-600 mr-2"></i> Reporte Consolidado de Asistencia - Alumnos
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                                <i class="fa-solid fa-calendar-check text-brand-600 dark:text-brand-400 mr-2"></i> Reporte Consolidado de Asistencia - Alumnos
                             </h3>
-                            <span class="text-xs text-slate-400" id="report-attendance-subtitle">Evaluación de asistencias</span>
+                            <span class="text-xs text-slate-400 dark:text-slate-500" id="report-attendance-subtitle">Evaluación de asistencias</span>
                         </div>
 
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         <th class="py-3 px-4">Alumno</th>
                                         <th class="py-3 px-4">Maestro Responsable</th>
                                         <th class="py-3 px-4 text-center">Clases Asistidas</th>
@@ -484,25 +501,25 @@
                                         <th class="py-3 px-4 text-right">Estado</th>
                                     </tr>
                                 </thead>
-                                <tbody id="report-attendance-tbody" class="divide-y divide-slate-100">
+                                <tbody id="report-attendance-tbody" class="divide-y divide-slate-100 dark:divide-slate-700">
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
                     <!-- REPORTE 2: ASISTENCIAS DE MAESTROS POR NIVEL -->
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
-                                <i class="fa-solid fa-user-tie text-indigo-600 mr-2"></i> Reporte Consolidado de Asistencia - Maestros
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                                <i class="fa-solid fa-user-tie text-indigo-600 dark:text-indigo-400 mr-2"></i> Reporte Consolidado de Asistencia - Maestros
                             </h3>
-                            <span class="text-xs text-slate-400" id="report-teachers-subtitle">Asistencia de docentes</span>
+                            <span class="text-xs text-slate-400 dark:text-slate-500" id="report-teachers-subtitle">Asistencia de docentes</span>
                         </div>
 
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         <th class="py-3 px-4">Maestro</th>
                                         <th class="py-3 px-4">Rol en el Nivel</th>
                                         <th class="py-3 px-4 text-center">Clases Asistidas</th>
@@ -510,31 +527,31 @@
                                         <th class="py-3 px-4 text-right">Estado</th>
                                     </tr>
                                 </thead>
-                                <tbody id="report-teachers-tbody" class="divide-y divide-slate-100">
+                                <tbody id="report-teachers-tbody" class="divide-y divide-slate-100 dark:divide-slate-700">
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
                     <!-- REPORTE 3: NOTAS / CALIFICACIONES POR NIVEL -->
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center">
-                                <i class="fa-solid fa-square-poll-vertical text-purple-600 mr-2"></i> Reporte Consolidado de Calificaciones
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
+                                <i class="fa-solid fa-square-poll-vertical text-purple-600 dark:text-purple-400 mr-2"></i> Reporte Consolidado de Calificaciones
                             </h3>
-                            <span class="text-xs text-slate-400" id="report-grades-subtitle">Escala 0.0 - 10.0</span>
+                            <span class="text-xs text-slate-400 dark:text-slate-500" id="report-grades-subtitle">Escala 0.0 - 10.0</span>
                         </div>
 
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
-                                    <tr id="report-grades-header" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <tr id="report-grades-header" class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         <th class="py-3 px-4">Alumno</th>
                                         <th class="py-3 px-4 text-center">Promedio</th>
                                         <th class="py-3 px-4 text-right">Estatus</th>
                                     </tr>
                                 </thead>
-                                <tbody id="report-grades-tbody" class="divide-y divide-slate-100">
+                                <tbody id="report-grades-tbody" class="divide-y divide-slate-100 dark:divide-slate-700">
                                 </tbody>
                             </table>
                         </div>
@@ -545,12 +562,12 @@
 
             <!-- TAB 2: STUDENTS -->
             <div id="tab-students" class="tab-content hidden flex-1 flex flex-col space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div class="relative w-full sm:w-80">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                             <i class="fa-solid fa-search"></i>
                         </span>
-                        <input type="text" id="student-search" oninput="renderStudentsTable()" placeholder="Buscar por nombre, documento o dirección..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                        <input type="text" id="student-search" oninput="renderStudentsTable()" placeholder="Buscar por nombre, documento o dirección..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <button onclick="openAddStudentModal()" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-user-plus"></i>
@@ -558,11 +575,11 @@
                     </button>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex-1 flex flex-col">
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     <th class="py-3 px-4">Alumno</th>
                                     <th class="py-3 px-4">Contacto / Cédula</th>
                                     <th class="py-3 px-4">Dirección</th>
@@ -572,7 +589,7 @@
                                     <th class="py-3 px-4 text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="students-table-body" class="divide-y divide-slate-100">
+                            <tbody id="students-table-body" class="divide-y divide-slate-100 dark:divide-slate-700">
                             </tbody>
                         </table>
                     </div>
@@ -581,12 +598,12 @@
 
             <!-- TAB 3: TEACHERS -->
             <div id="tab-teachers" class="tab-content hidden flex-1 flex flex-col space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div class="relative w-full sm:w-80">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                             <i class="fa-solid fa-search"></i>
                         </span>
-                        <input type="text" id="teacher-search" oninput="renderTeachersTable()" placeholder="Buscar por nombre, DUI o dirección..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                        <input type="text" id="teacher-search" oninput="renderTeachersTable()" placeholder="Buscar por nombre, DUI o dirección..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <button onclick="openAddTeacherModal()" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-user-plus"></i>
@@ -594,11 +611,11 @@
                     </button>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex-1 flex flex-col">
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     <th class="py-3 px-4">Maestro</th>
                                     <th class="py-3 px-4">DUI / Contacto</th>
                                     <th class="py-3 px-4">Dirección</th>
@@ -608,7 +625,7 @@
                                     <th class="py-3 px-4 text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="teachers-table-body" class="divide-y divide-slate-100">
+                            <tbody id="teachers-table-body" class="divide-y divide-slate-100 dark:divide-slate-700">
                             </tbody>
                         </table>
                     </div>
@@ -617,8 +634,8 @@
 
             <!-- TAB 6: DOCUMENTS -->
             <div id="tab-documents" class="tab-content hidden flex-1 flex flex-col space-y-4">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <h3 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-folder-open text-brand-600 mr-2"></i> Expedientes y Documentos de Alumnos</h3>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-white"><i class="fa-solid fa-folder-open text-brand-600 dark:text-brand-400 mr-2"></i> Expedientes y Documentos de Alumnos</h3>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="documents-grid">
@@ -629,21 +646,21 @@
 
     <!-- MODAL: CREAR NUEVA ACTIVIDAD / EVALUACIÓN -->
     <div id="evaluation-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-                <h3 class="text-base font-bold text-slate-900">Agregar Nueva Actividad</h3>
-                <button onclick="closeModal('evaluation-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Agregar Nueva Actividad</h3>
+                <button onclick="closeModal('evaluation-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
             <form id="evaluation-form" onsubmit="handleEvaluationSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre de la Actividad / Tarea *</label>
-                    <input type="text" id="eval-nombre" required placeholder="Ej. Tarea 1, Examen Parcial" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nombre de la Actividad / Tarea *</label>
+                    <input type="text" id="eval-nombre" required placeholder="Ej. Tarea 1, Examen Parcial" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Actividad</label>
-                    <select id="eval-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tipo de Actividad</label>
+                    <select id="eval-tipo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                         <option value="Tarea">Tarea / Ejercicio</option>
                         <option value="Actividad">Actividad Corta</option>
                         <option value="Examen">Examen / Evaluación</option>
@@ -652,12 +669,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha</label>
-                    <input type="date" id="eval-fecha" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fecha</label>
+                    <input type="date" id="eval-fecha" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('evaluation-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('evaluation-modal')" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
                     <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-sm flex items-center space-x-2">
                         <i class="fa-solid fa-plus"></i>
                         <span>Agregar Columna</span>
@@ -669,61 +686,61 @@
 
     <!-- MODAL: REGISTRAR / EDITAR ALUMNO -->
     <div id="student-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-                <h3 class="text-base font-bold text-slate-900" id="student-modal-title">Registrar Nuevo Alumno</h3>
-                <button onclick="closeModal('student-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" id="student-modal-title">Registrar Nuevo Alumno</h3>
+                <button onclick="closeModal('student-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
             <form id="student-form" onsubmit="handleStudentSubmit(event)" class="space-y-4">
                 <input type="hidden" id="student-id">
 
-                <div class="flex items-center space-x-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <div class="w-14 h-14 rounded-full bg-slate-200 border-2 border-brand-500 flex items-center justify-center overflow-hidden shrink-0">
+                <div class="flex items-center space-x-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div class="w-14 h-14 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-brand-500 flex items-center justify-center overflow-hidden shrink-0">
                         <i class="fa-solid fa-user text-xl text-slate-400" id="icon-foto-default"></i>
                         <img id="preview-foto" class="w-full h-full object-cover hidden" alt="Foto perfil">
                     </div>
                     <div class="flex-1">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Fotografía del Alumno</label>
-                        <input type="file" id="student-foto" accept="image/*" onchange="previsualizarFoto(event)" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fotografía del Alumno</label>
+                        <input type="file" id="student-foto" accept="image/*" onchange="previsualizarFoto(event)" class="text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 dark:file:bg-emerald-950 file:text-brand-700 dark:file:text-brand-400">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nombres *</label>
-                        <input type="text" id="student-nombres" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nombres *</label>
+                        <input type="text" id="student-nombres" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Apellidos *</label>
-                        <input type="text" id="student-apellidos" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Apellidos *</label>
+                        <input type="text" id="student-apellidos" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Documento / Cédula / DUI</label>
-                        <input type="text" id="student-dni" placeholder="00000000-0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Documento / Cédula / DUI</label>
+                        <input type="text" id="student-dni" placeholder="00000000-0" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono</label>
-                        <input type="text" id="student-phone" placeholder="7000-0000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Teléfono</label>
+                        <input type="text" id="student-phone" placeholder="7000-0000" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dirección</label>
-                    <input type="text" id="student-direccion" placeholder="Calle / Av. / Colonia / Comunidad..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Dirección</label>
+                    <input type="text" id="student-direccion" placeholder="Calle / Av. / Colonia / Comunidad..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Edad</label>
-                        <input type="number" id="student-age" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Edad</label>
+                        <input type="number" id="student-age" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nivel Alfabetización</label>
-                        <select id="student-level" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 disabled:text-slate-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nivel Alfabetización</label>
+                        <select id="student-level" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 dark:disabled:bg-slate-800">
                             <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
                             <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
                             <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
@@ -732,36 +749,36 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Maestro Responsable *</label>
-                        <select id="student-maestro" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Maestro Responsable *</label>
+                        <select id="student-maestro" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                             <option value="">Cargando maestros...</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200 pt-3">
-                    <h4 class="text-xs font-bold text-slate-800 mb-2 flex items-center space-x-1">
-                        <i class="fa-solid fa-paperclip text-brand-600"></i>
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center space-x-1">
+                        <i class="fa-solid fa-paperclip text-brand-600 dark:text-brand-400"></i>
                         <span>Adjuntar Documentos Personales</span>
                     </h4>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                            <label class="block font-semibold text-slate-700 mb-1">DUI / Cédula</label>
+                        <div class="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">DUI / Cédula</label>
                             <input type="file" id="file-dui" accept="image/*,.pdf" class="w-full text-slate-500 text-[10px]">
                         </div>
-                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                            <label class="block font-semibold text-slate-700 mb-1">Partida Nacimiento</label>
+                        <div class="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Partida Nacimiento</label>
                             <input type="file" id="file-partida" accept="image/*,.pdf" class="w-full text-slate-500 text-[10px]">
                         </div>
-                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                            <label class="block font-semibold text-slate-700 mb-1">Certificados / Otros</label>
+                        <div class="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Certificados / Otros</label>
                             <input type="file" id="file-certificado" accept="image/*,.pdf" class="w-full text-slate-500 text-[10px]">
                         </div>
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('student-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('student-modal')" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
                     <button type="submit" id="btn-submit-student" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-sm flex items-center space-x-2">
                         <i class="fa-solid fa-floppy-disk"></i>
                         <span>Guardar Alumno</span>
@@ -773,68 +790,68 @@
 
     <!-- MODAL: REGISTRAR / EDITAR MAESTRO -->
     <div id="teacher-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-                <h3 class="text-base font-bold text-slate-900" id="teacher-modal-title">Registrar Nuevo Maestro</h3>
-                <button onclick="closeModal('teacher-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" id="teacher-modal-title">Registrar Nuevo Maestro</h3>
+                <button onclick="closeModal('teacher-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
             <form id="teacher-form" onsubmit="handleTeacherSubmit(event)" class="space-y-4">
                 <input type="hidden" id="teacher-id">
 
-                <div class="flex items-center space-x-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <div class="w-14 h-14 rounded-full bg-slate-200 border-2 border-brand-500 flex items-center justify-center overflow-hidden shrink-0">
+                <div class="flex items-center space-x-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div class="w-14 h-14 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-brand-500 flex items-center justify-center overflow-hidden shrink-0">
                         <i class="fa-solid fa-chalkboard-user text-xl text-slate-400" id="icon-teacher-foto-default"></i>
                         <img id="preview-teacher-foto" class="w-full h-full object-cover hidden" alt="Foto Maestro">
                     </div>
                     <div class="flex-1">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Fotografía del Maestro</label>
-                        <input type="file" id="teacher-foto" accept="image/*" onchange="previsualizarFotoMaestro(event)" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fotografía del Maestro</label>
+                        <input type="file" id="teacher-foto" accept="image/*" onchange="previsualizarFotoMaestro(event)" class="text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 dark:file:bg-emerald-950 file:text-brand-700 dark:file:text-brand-400">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre Completo *</label>
-                        <input type="text" id="teacher-nombre" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nombre Completo *</label>
+                        <input type="text" id="teacher-nombre" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">DUI *</label>
-                        <input type="text" id="teacher-dui" placeholder="00000000-0" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">DUI *</label>
+                        <input type="text" id="teacher-dui" placeholder="00000000-0" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono</label>
-                        <input type="text" id="teacher-phone" placeholder="7000-0000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Teléfono</label>
+                        <input type="text" id="teacher-phone" placeholder="7000-0000" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Correo Electrónico *</label>
-                        <input type="email" id="teacher-email" required placeholder="maestro@correo.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Correo Electrónico *</label>
+                        <input type="email" id="teacher-email" required placeholder="maestro@correo.com" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dirección Residencial</label>
-                    <input type="text" id="teacher-direccion" placeholder="Calle / Av. / Colonia / Municipio..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Dirección Residencial</label>
+                    <input type="text" id="teacher-direccion" placeholder="Calle / Av. / Colonia / Municipio..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
 
-                <div id="teacher-password-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+                <div id="teacher-password-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-emerald-50/60 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-teacher-pass">Contraseña *</label>
-                        <input type="password" id="teacher-password" placeholder="••••••••" minlength="6" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" id="label-teacher-pass">Contraseña *</label>
+                        <input type="password" id="teacher-password" placeholder="••••••••" minlength="6" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Confirmar Contraseña</label>
-                        <input type="password" id="teacher-password-confirm" placeholder="••••••••" minlength="6" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Confirmar Contraseña</label>
+                        <input type="password" id="teacher-password-confirm" placeholder="••••••••" minlength="6" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nivel Asignado</label>
-                        <select id="teacher-nivel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nivel Asignado</label>
+                        <select id="teacher-nivel" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                             <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
                             <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
                             <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
@@ -843,8 +860,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Rol en el Nivel *</label>
-                        <select id="teacher-rol" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rol en el Nivel *</label>
+                        <select id="teacher-rol" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Administrador">Administrador</option>
                             <option value="Líder de nivel">Líder de nivel</option>
                             <option value="Sublíder">Sublíder</option>
                             <option value="Colaborador">Colaborador</option>
@@ -852,13 +870,13 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200 pt-3">
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Copia de DUI (Imagen o PDF)</label>
-                    <input type="file" id="teacher-dui-file" accept="image/*,.pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Copia de DUI (Imagen o PDF)</label>
+                    <input type="file" id="teacher-dui-file" accept="image/*,.pdf" class="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 dark:file:bg-emerald-950 file:text-brand-700 dark:file:text-brand-400">
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('teacher-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('teacher-modal')" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
                     <button type="submit" id="btn-submit-teacher" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-sm flex items-center space-x-2">
                         <i class="fa-solid fa-floppy-disk"></i>
                         <span>Guardar Maestro</span>
@@ -893,7 +911,37 @@
             }
         };
 
+        // LÓGICA DE MODO OSCURO
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateThemeIcons();
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcons();
+        }
+
+        function updateThemeIcons() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconHeader = document.getElementById('theme-toggle-icon');
+            const iconBtn = document.getElementById('theme-btn-icon');
+            const textBtn = document.getElementById('theme-btn-text');
+
+            if (iconHeader) iconHeader.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if (iconBtn) iconBtn.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if (textBtn) textBtn.textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
+        }
+
         window.onload = async function() {
+            initTheme();
+
             document.getElementById('tracker-date-select').valueAsDate = new Date();
             validarFechaLunesMartes();
 
@@ -931,23 +979,22 @@
         async function identificarRolUsuario(email) {
             state.currentUser.email = email;
 
-            if (email === 'carlosnec@gmail.com') {
+            const { data } = await supabaseClient
+                .from('maestros')
+                .select('rol_nivel, nivel')
+                .eq('email', email)
+                .maybeSingle();
+
+            if (data) {
+                state.currentUser.rol = data.rol_nivel || 'Colaborador';
+                state.currentUser.nivelAsignado = (data.rol_nivel === 'Administrador') ? null : (data.nivel || 'Inicial (Nivel 0)');
+            } else if (email === 'carlosnec@gmail.com') {
+                // Respaldo de seguridad por correo admin principal
                 state.currentUser.rol = 'Administrador';
                 state.currentUser.nivelAsignado = null;
             } else {
-                const { data } = await supabaseClient
-                    .from('maestros')
-                    .select('rol_nivel, nivel')
-                    .eq('email', email)
-                    .maybeSingle();
-
-                if (data) {
-                    state.currentUser.rol = data.rol_nivel || 'Colaborador';
-                    state.currentUser.nivelAsignado = data.nivel || 'Inicial (Nivel 0)';
-                } else {
-                    state.currentUser.rol = 'Colaborador';
-                    state.currentUser.nivelAsignado = 'Inicial (Nivel 0)';
-                }
+                state.currentUser.rol = 'Colaborador';
+                state.currentUser.nivelAsignado = 'Inicial (Nivel 0)';
             }
 
             aplicarPermisosEnInterfaz();
@@ -1067,10 +1114,10 @@
             const select = document.getElementById('student-maestro');
             if (!select) return;
             
-            const lideres = state.teachers.filter(m => m.rol_nivel === 'Líder de nivel');
+            const lideres = state.teachers.filter(m => m.rol_nivel === 'Líder de nivel' || m.rol_nivel === 'Administrador');
 
             if (lideres.length === 0) {
-                select.innerHTML = '<option value="">No hay líderes de nivel registrados</option>';
+                select.innerHTML = '<option value="">No hay líderes o administradores registrados</option>';
                 return;
             }
 
@@ -1097,14 +1144,14 @@
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('bg-white', 'text-brand-700', 'shadow-sm');
-                el.classList.add('text-slate-600', 'hover:text-slate-900');
+                el.classList.remove('bg-white', 'dark:bg-slate-900', 'text-brand-700', 'dark:text-brand-500', 'shadow-sm');
+                el.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:text-slate-900', 'dark:hover:text-white');
             });
 
             document.getElementById('tab-' + tabId).classList.remove('hidden');
             const activeBtn = document.getElementById('nav-' + tabId);
-            activeBtn.classList.remove('text-slate-600', 'hover:text-slate-900');
-            activeBtn.classList.add('bg-white', 'text-brand-700', 'shadow-sm');
+            activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:text-slate-900', 'dark:hover:text-white');
+            activeBtn.classList.add('bg-white', 'dark:bg-slate-900', 'text-brand-700', 'dark:text-brand-500', 'shadow-sm');
 
             if (tabId === 'dashboard') renderDashboard();
             if (tabId === 'level-tracker') cargarSeguimientoNivel();
@@ -1144,13 +1191,13 @@
 
             if (dayNum === 1) {
                 badge.textContent = "Clase de Lunes";
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 self-stretch sm:self-auto flex items-center justify-center";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 self-stretch sm:self-auto flex items-center justify-center";
             } else if (dayNum === 2) {
                 badge.textContent = "Clase de Martes";
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 self-stretch sm:self-auto flex items-center justify-center";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 self-stretch sm:self-auto flex items-center justify-center";
             } else {
                 badge.textContent = "Día fuera de horario (Solo Lunes/Martes)";
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 self-stretch sm:self-auto flex items-center justify-center";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 self-stretch sm:self-auto flex items-center justify-center";
             }
         }
 
@@ -1331,21 +1378,21 @@
             }
 
             const headerRow = document.getElementById('grades-table-header');
-            headerRow.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600">Alumno</th>`;
+            headerRow.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Alumno</th>`;
             
             const canEdit = state.currentUser.rol === 'Administrador' || state.currentUser.rol === 'Líder de nivel';
 
             evalList.forEach(ev => {
                 headerRow.innerHTML += `
-                    <th class="py-3 px-3 text-center font-semibold text-slate-600 group relative">
+                    <th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300 group relative">
                         <div class="flex items-center justify-center space-x-1">
                             <span>${ev}</span>
                             ${canEdit ? `
                             <div class="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 ml-1">
-                                <button onclick="editarEvaluacion('${ev}')" title="Editar Tarea" class="text-blue-600 hover:text-blue-800 text-[10px]">
+                                <button onclick="editarEvaluacion('${ev}')" title="Editar Tarea" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-[10px]">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <button onclick="eliminarEvaluacion('${ev}')" title="Eliminar Tarea" class="text-red-600 hover:text-red-800 text-[10px]">
+                                <button onclick="eliminarEvaluacion('${ev}')" title="Eliminar Tarea" class="text-red-600 dark:text-red-400 hover:text-red-800 text-[10px]">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>` : ''}
@@ -1353,7 +1400,7 @@
                     </th>
                 `;
             });
-            headerRow.innerHTML += `<th class="py-3 px-4 text-center font-bold text-brand-700">Promedio</th>`;
+            headerRow.innerHTML += `<th class="py-3 px-4 text-center font-bold text-brand-700 dark:text-brand-400">Promedio</th>`;
 
             const tbody = document.getElementById('grades-table-body');
             tbody.innerHTML = '';
@@ -1375,17 +1422,17 @@
                                 value="${valNota}" 
                                 oninput="calcularPromedioFila(this)" 
                                 placeholder="-" 
-                                class="grade-input w-16 bg-slate-50 border border-slate-200 text-center rounded-lg py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                                class="grade-input w-16 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white text-center rounded-lg py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </td>
                     `;
                 });
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80 transition-all" id="student-row-${s.id}">
-                        <td class="py-3 px-4 font-semibold text-slate-900">${s.nombres} ${s.apellidos}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-all" id="student-row-${s.id}">
+                        <td class="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
                         ${inputsHtml}
                         <td class="py-3 px-4 text-center">
-                            <span class="row-promedio font-bold text-sm text-brand-700 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">-</span>
+                            <span class="row-promedio font-bold text-sm text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-emerald-800">-</span>
                         </td>
                     </tr>
                 `;
@@ -1419,13 +1466,13 @@
                 const prom = (suma / contador).toFixed(1);
                 badgePromedio.textContent = prom;
                 if (prom >= 6.0) {
-                    badgePromedio.className = "row-promedio font-bold text-sm text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200";
+                    badgePromedio.className = "row-promedio font-bold text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800";
                 } else {
-                    badgePromedio.className = "row-promedio font-bold text-sm text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200";
+                    badgePromedio.className = "row-promedio font-bold text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800";
                 }
             } else {
                 badgePromedio.textContent = "-";
-                badgePromedio.className = "row-promedio font-bold text-sm text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200";
+                badgePromedio.className = "row-promedio font-bold text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600";
             }
         }
 
@@ -1548,23 +1595,23 @@
                     const pct = totalClases > 0 ? Math.round((cAsistidas / totalClases) * 100) : 0;
                     sumaPorcentajesAtt += pct;
 
-                    let badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    let badgeColor = 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
                     let estadoTxt = 'Excelente';
 
                     if (pct < 60) {
-                        badgeColor = 'bg-red-50 text-red-700 border-red-200';
+                        badgeColor = 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800';
                         estadoTxt = 'Crítico';
                     } else if (pct < 80) {
-                        badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        badgeColor = 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
                         estadoTxt = 'Regular';
                     }
 
                     tbodyAtt.innerHTML += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-semibold text-slate-800">${s.nombres} ${s.apellidos}</td>
-                            <td class="py-3 px-4 text-xs text-slate-500">${s.maestro_responsable || 'No asignado'}</td>
-                            <td class="py-3 px-4 text-center font-bold text-slate-700">${cAsistidas} / ${totalClases}</td>
-                            <td class="py-3 px-4 text-center font-extrabold text-sm">${pct}%</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400">${s.maestro_responsable || 'No asignado'}</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">${cAsistidas} / ${totalClases}</td>
+                            <td class="py-3 px-4 text-center font-extrabold text-sm dark:text-white">${pct}%</td>
                             <td class="py-3 px-4 text-right">
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${badgeColor}">${estadoTxt}</span>
                             </td>
@@ -1610,23 +1657,23 @@
                     const cAsistidas = infoAtt.asistio;
                     const pct = totalClasesM > 0 ? Math.round((cAsistidas / totalClasesM) * 100) : 0;
 
-                    let badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    let badgeColor = 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
                     let estadoTxt = 'Excelente';
 
                     if (pct < 60) {
-                        badgeColor = 'bg-red-50 text-red-700 border-red-200';
+                        badgeColor = 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800';
                         estadoTxt = 'Irregular';
                     } else if (pct < 80) {
-                        badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        badgeColor = 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
                         estadoTxt = 'Aceptable';
                     }
 
                     tbodyTeachers.innerHTML += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-semibold text-slate-800">${m.nombre}</td>
-                            <td class="py-3 px-4 text-xs text-slate-500">${m.rol_nivel || 'Docente'}</td>
-                            <td class="py-3 px-4 text-center font-bold text-slate-700">${cAsistidas} / ${totalClasesM}</td>
-                            <td class="py-3 px-4 text-center font-extrabold text-sm">${pct}%</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${m.nombre}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400">${m.rol_nivel || 'Docente'}</td>
+                            <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">${cAsistidas} / ${totalClasesM}</td>
+                            <td class="py-3 px-4 text-center font-extrabold text-sm dark:text-white">${pct}%</td>
                             <td class="py-3 px-4 text-right">
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${badgeColor}">${estadoTxt}</span>
                             </td>
@@ -1659,13 +1706,13 @@
                 const evalList = Array.from(evalsModulo);
 
                 const headerGrades = document.getElementById('report-grades-header');
-                headerGrades.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600">Alumno</th>`;
+                headerGrades.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Alumno</th>`;
                 evalList.forEach(ev => {
-                    headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600">${ev}</th>`;
+                    headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300">${ev}</th>`;
                 });
                 headerGrades.innerHTML += `
-                    <th class="py-3 px-4 text-center font-bold text-indigo-700">Promedio</th>
-                    <th class="py-3 px-4 text-right font-bold text-slate-600">Estatus</th>
+                    <th class="py-3 px-4 text-center font-bold text-indigo-700 dark:text-indigo-400">Promedio</th>
+                    <th class="py-3 px-4 text-right font-bold text-slate-600 dark:text-slate-300">Estatus</th>
                 `;
 
                 const tbodyGrades = document.getElementById('report-grades-tbody');
@@ -1684,14 +1731,14 @@
                         if (val !== null) {
                             sumaAlumno += parseFloat(val);
                             contAlumno++;
-                            colNotasHtml += `<td class="py-3 px-3 text-center font-medium text-slate-700">${parseFloat(val).toFixed(1)}</td>`;
+                            colNotasHtml += `<td class="py-3 px-3 text-center font-medium text-slate-700 dark:text-slate-300">${parseFloat(val).toFixed(1)}</td>`;
                         } else {
-                            colNotasHtml += `<td class="py-3 px-3 text-center text-slate-300">-</td>`;
+                            colNotasHtml += `<td class="py-3 px-3 text-center text-slate-300 dark:text-slate-600">-</td>`;
                         }
                     });
 
                     let promedioTxt = '-';
-                    let statusBadge = `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-xs font-semibold">Sin Evaluaciones</span>`;
+                    let statusBadge = `<span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-xs font-semibold">Sin Evaluaciones</span>`;
 
                     if (contAlumno > 0) {
                         const prom = (sumaAlumno / contAlumno);
@@ -1700,17 +1747,17 @@
                         totalAlumnosConNotas++;
 
                         if (prom >= 6.0) {
-                            statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold">Aprobado</span>`;
+                            statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold">Aprobado</span>`;
                         } else {
-                            statusBadge = `<span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-bold">Reprobado</span>`;
+                            statusBadge = `<span class="px-2.5 py-1 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-bold">Reprobado</span>`;
                         }
                     }
 
                     tbodyGrades.innerHTML += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-4 font-semibold text-slate-800">${s.nombres} ${s.apellidos}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
                             ${colNotasHtml}
-                            <td class="py-3 px-4 text-center font-extrabold text-sm text-indigo-700">${promedioTxt}</td>
+                            <td class="py-3 px-4 text-center font-extrabold text-sm text-indigo-700 dark:text-indigo-400">${promedioTxt}</td>
                             <td class="py-3 px-4 text-right">${statusBadge}</td>
                         </tr>
                     `;
@@ -1746,11 +1793,11 @@
                 alumnosNivel.forEach(s => {
                     const isChecked = mapAsistenciaAlumnos[s.id] === true ? 'checked' : '';
                     tbodyAlumnos.innerHTML += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-2.5 px-3 font-semibold text-slate-800">${s.nombres} ${s.apellidos}</td>
-                            <td class="py-2.5 px-3 text-xs text-slate-500">${s.maestro_responsable || 'No asignado'}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
+                            <td class="py-2.5 px-3 text-xs text-slate-500 dark:text-slate-400">${s.maestro_responsable || 'No asignado'}</td>
                             <td class="py-2.5 px-3 text-center">
-                                <input type="checkbox" data-alumno-id="${s.id}" ${isChecked} class="student-checkbox w-5 h-5 text-brand-600 rounded focus:ring-brand-500 border-slate-300">
+                                <input type="checkbox" data-alumno-id="${s.id}" ${isChecked} class="student-checkbox w-5 h-5 text-brand-600 rounded focus:ring-brand-500 border-slate-300 dark:border-slate-700 dark:bg-slate-900">
                             </td>
                         </tr>
                     `;
@@ -1778,14 +1825,14 @@
                 maestrosNivel.forEach(m => {
                     const isChecked = mapAsistenciaMaestros[m.id] === true ? 'checked' : '';
                     containerMaestros.innerHTML += `
-                        <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                        <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
                             <div>
-                                <div class="font-bold text-slate-800">${m.nombre}</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100">${m.nombre}</div>
                                 <div class="text-[10px] text-slate-400">${m.rol_nivel || 'Docente'}</div>
                             </div>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <span class="text-slate-500 font-medium">Asistió</span>
-                                <input type="checkbox" data-maestro-id="${m.id}" ${isChecked} class="teacher-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                                <span class="text-slate-500 dark:text-slate-400 font-medium">Asistió</span>
+                                <input type="checkbox" data-maestro-id="${m.id}" ${isChecked} class="teacher-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-700 dark:bg-slate-900 focus:ring-indigo-500">
                             </label>
                         </div>
                     `;
@@ -1968,18 +2015,18 @@
             recent.forEach(s => {
                 const avatar = s.foto_url 
                     ? `<img src="${s.foto_url}" class="w-7 h-7 rounded-full object-cover">`
-                    : `<div class="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs">${s.nombres ? s.nombres[0] : 'A'}</div>`;
+                    : `<div class="w-7 h-7 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs">${s.nombres ? s.nombres[0] : 'A'}</div>`;
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80">
-                        <td class="py-3 font-medium text-slate-900 flex items-center space-x-2">
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50">
+                        <td class="py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center space-x-2">
                             ${avatar}
                             <span>${s.nombres} ${s.apellidos}</span>
                         </td>
-                        <td class="py-3 text-slate-500">${s.maestro_responsable || 'No asignado'}</td>
-                        <td class="py-3"><span class="px-2.5 py-1 bg-brand-50 text-brand-700 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
+                        <td class="py-3 text-slate-500 dark:text-slate-400">${s.maestro_responsable || 'No asignado'}</td>
+                        <td class="py-3"><span class="px-2.5 py-1 bg-brand-50 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
                         <td class="py-3 text-right">
-                            <button onclick="switchTab('students')" class="text-brand-600 hover:text-brand-800 text-xs font-semibold">Ver <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                            <button onclick="switchTab('students')" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 text-xs font-semibold">Ver <i class="fa-solid fa-arrow-right ml-1"></i></button>
                         </td>
                     </tr>
                 `;
@@ -2016,38 +2063,38 @@
 
             filtered.forEach(s => {
                 const avatar = s.foto_url 
-                    ? `<img src="${s.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200">`
-                    : `<div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs border border-brand-200">${s.nombres ? s.nombres[0] : 'A'}</div>`;
+                    ? `<img src="${s.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700">`
+                    : `<div class="w-9 h-9 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs border border-brand-200 dark:border-emerald-800">${s.nombres ? s.nombres[0] : 'A'}</div>`;
 
                 const docsIcons = `
                     <div class="flex justify-center space-x-2 text-sm">
-                        ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" title="DUI" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-id-card"></i></a>` : ''}
-                        ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" title="Partida" class="text-emerald-600 hover:text-emerald-800"><i class="fa-solid fa-file-contract"></i></a>` : ''}
-                        ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" title="Certificado" class="text-amber-600 hover:text-amber-800"><i class="fa-solid fa-award"></i></a>` : ''}
-                        ${!s.dui_url && !s.partida_url && !s.certificado_url ? `<span class="text-xs text-slate-300">-</span>` : ''}
+                        ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" title="DUI" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"><i class="fa-solid fa-id-card"></i></a>` : ''}
+                        ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" title="Partida" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800"><i class="fa-solid fa-file-contract"></i></a>` : ''}
+                        ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" title="Certificado" class="text-amber-600 dark:text-amber-400 hover:text-amber-800"><i class="fa-solid fa-award"></i></a>` : ''}
+                        ${!s.dui_url && !s.partida_url && !s.certificado_url ? `<span class="text-xs text-slate-300 dark:text-slate-600">-</span>` : ''}
                     </div>
                 `;
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80 transition-all">
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-all">
                         <td class="py-3 px-4 flex items-center space-x-3">
                             ${avatar}
                             <div>
-                                <div class="font-bold text-slate-900">${s.nombres} ${s.apellidos}</div>
+                                <div class="font-bold text-slate-900 dark:text-slate-100">${s.nombres} ${s.apellidos}</div>
                                 <div class="text-xs text-slate-400">${s.edad ? s.edad + ' años' : 'Edad S/D'}</div>
                             </div>
                         </td>
                         <td class="py-3 px-4">
-                            <div class="text-slate-800 font-medium text-xs">${s.documento || 'Sin Documento'}</div>
+                            <div class="text-slate-800 dark:text-slate-200 font-medium text-xs">${s.documento || 'Sin Documento'}</div>
                             <div class="text-xs text-slate-400">${s.telefono || 'Sin Teléfono'}</div>
                         </td>
-                        <td class="py-3 px-4 text-slate-700 text-xs">${s.direccion || 'Sin Dirección'}</td>
-                        <td class="py-3 px-4 text-slate-700 font-medium text-xs">${s.maestro_responsable || 'No asignado'}</td>
-                        <td class="py-3 px-4"><span class="px-2.5 py-1 bg-brand-50 text-brand-700 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 text-xs">${s.direccion || 'Sin Dirección'}</td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium text-xs">${s.maestro_responsable || 'No asignado'}</td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-1 bg-brand-50 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
                         <td class="py-3 px-4 text-center">${docsIcons}</td>
                         <td class="py-3 px-4 text-right space-x-1">
-                            <button onclick="editStudent(${s.id})" title="Editar Alumno" class="text-slate-500 hover:text-brand-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
-                            ${canDelete ? `<button onclick="deleteStudent(${s.id})" title="Eliminar Alumno" class="text-slate-500 hover:text-red-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            <button onclick="editStudent(${s.id})" title="Editar Alumno" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+                            ${canDelete ? `<button onclick="deleteStudent(${s.id})" title="Eliminar Alumno" class="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </td>
                     </tr>
                 `;
@@ -2204,36 +2251,37 @@
 
             filtered.forEach(m => {
                 const avatar = m.foto_url 
-                    ? `<img src="${m.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200">`
-                    : `<div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs border border-brand-200">${m.nombre ? m.nombre[0] : 'M'}</div>`;
+                    ? `<img src="${m.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700">`
+                    : `<div class="w-9 h-9 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs border border-brand-200 dark:border-emerald-800">${m.nombre ? m.nombre[0] : 'M'}</div>`;
 
-                const rolColor = m.rol_nivel === 'Líder de nivel' ? 'bg-purple-100 text-purple-800' :
-                                 m.rol_nivel === 'Sublíder' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700';
+                const rolColor = m.rol_nivel === 'Administrador' ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300' :
+                                 m.rol_nivel === 'Líder de nivel' ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300' :
+                                 m.rol_nivel === 'Sublíder' ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80 transition-all">
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-all">
                         <td class="py-3 px-4 flex items-center space-x-3">
                             ${avatar}
                             <div>
-                                <div class="font-bold text-slate-900">${m.nombre}</div>
+                                <div class="font-bold text-slate-900 dark:text-slate-100">${m.nombre}</div>
                                 <div class="text-xs text-slate-400">${m.email || 'Sin Correo'}</div>
                             </div>
                         </td>
                         <td class="py-3 px-4">
-                            <div class="text-slate-800 font-medium text-xs">${m.dui || 'Sin DUI'}</div>
+                            <div class="text-slate-800 dark:text-slate-200 font-medium text-xs">${m.dui || 'Sin DUI'}</div>
                             <div class="text-xs text-slate-400">${m.telefono || 'Sin Teléfono'}</div>
                         </td>
-                        <td class="py-3 px-4 text-slate-700 text-xs">${m.direccion || 'Sin Dirección'}</td>
-                        <td class="py-3 px-4 text-slate-700 font-medium text-xs">${m.nivel || 'Sin Asignar'}</td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 text-xs">${m.direccion || 'Sin Dirección'}</td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium text-xs">${m.nivel || 'Sin Asignar'}</td>
                         <td class="py-3 px-4">
                             <span class="px-2.5 py-1 ${rolColor} rounded-lg text-xs font-semibold">${m.rol_nivel || 'Colaborador'}</span>
                         </td>
                         <td class="py-3 px-4 text-center">
-                            ${m.dui_adjunto_url ? `<a href="${m.dui_adjunto_url}" target="_blank" class="text-brand-600 hover:text-brand-800 text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>Ver DUI</a>` : '<span class="text-slate-300 text-xs">-</span>'}
+                            ${m.dui_adjunto_url ? `<a href="${m.dui_adjunto_url}" target="_blank" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>Ver DUI</a>` : '<span class="text-slate-300 dark:text-slate-600 text-xs">-</span>'}
                         </td>
                         <td class="py-3 px-4 text-right space-x-1">
-                            <button onclick="editTeacher('${m.id}')" class="text-slate-500 hover:text-brand-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteTeacher('${m.id}')" class="text-slate-500 hover:text-red-600 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="editTeacher('${m.id}')" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteTeacher('${m.id}')" class="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
@@ -2420,20 +2468,20 @@
 
             conDocumentos.forEach(s => {
                 grid.innerHTML += `
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex items-center space-x-3 mb-1">
-                                ${s.foto_url ? `<img src="${s.foto_url}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">${s.nombres ? s.nombres[0] : 'A'}</div>`}
+                                ${s.foto_url ? `<img src="${s.foto_url}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm">${s.nombres ? s.nombres[0] : 'A'}</div>`}
                                 <div>
-                                    <h4 class="font-bold text-slate-900 text-sm">${s.nombres} ${s.apellidos}</h4>
+                                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">${s.nombres} ${s.apellidos}</h4>
                                     <p class="text-xs text-slate-400">${s.maestro_responsable || 'Maestro no asignado'}</p>
                                 </div>
                             </div>
-                            <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${s.direccion || 'Sin dirección registrada'}</p>
-                            <div class="space-y-2 text-xs border-t border-slate-100 pt-3">
-                                ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-brand-50 text-slate-700"><span class="font-medium"><i class="fa-solid fa-id-card text-indigo-600 mr-2"></i>DUI / Cédula</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
-                                ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-brand-50 text-slate-700"><span class="font-medium"><i class="fa-solid fa-file-contract text-emerald-600 mr-2"></i>Partida Nacimiento</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
-                                ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-brand-50 text-slate-700"><span class="font-medium"><i class="fa-solid fa-award text-amber-600 mr-2"></i>Certificados</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${s.direccion || 'Sin dirección registrada'}</p>
+                            <div class="space-y-2 text-xs border-t border-slate-100 dark:border-slate-700 pt-3">
+                                ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-id-card text-indigo-600 dark:text-indigo-400 mr-2"></i>DUI / Cédula</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-file-contract text-emerald-600 dark:text-emerald-400 mr-2"></i>Partida Nacimiento</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-award text-amber-600 dark:text-amber-400 mr-2"></i>Certificados</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
                             </div>
                         </div>
                     </div>
