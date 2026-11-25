@@ -387,7 +387,7 @@
                         <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center">
                             <i class="fa-solid fa-table-cells text-brand-600 dark:text-brand-400 mr-2"></i> Planilla de Calificaciones del Nivel
                         </h3>
-                        <span class="text-xs text-slate-400 dark:text-slate-500">Escala de 0 a 10</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500">Escala de 0 a 10 • Tareas independientes por materia</span>
                     </div>
 
                     <div class="overflow-x-auto flex-1">
@@ -653,6 +653,10 @@
             </div>
             
             <form id="evaluation-form" onsubmit="handleEvaluationSubmit(event)" class="space-y-4">
+                <div class="p-2.5 bg-indigo-50/70 dark:bg-indigo-950/50 rounded-xl border border-indigo-200/70 dark:border-indigo-800/70 text-xs text-indigo-800 dark:text-indigo-200">
+                    Se agregará solo a: <strong id="eval-context-label"></strong>
+                </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nombre de la Actividad / Tarea *</label>
                     <input type="text" id="eval-nombre" required placeholder="Ej. Tarea 1, Examen Parcial" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -894,23 +898,73 @@
         const CONFIG = {
             SUPABASE_URL: "https://cegulltqwhgovouncvfc.supabase.co",
             SUPABASE_KEY: "sb_publishable_H5f5I2xa7o--Mun2VOvtAw_ziWidTDB",
-            STORAGE_BUCKET: "documentos_alumnos"
+            STORAGE_BUCKET: "documentos_alumnos",
+            STORAGE_CATALOG_KEY: "alfabetizacion_catalogo_notas_v1"
         };
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+
+        const DEFAULT_MODULES = ["Lectoescritura", "Matemáticas Básicas", "Ciencias y Entorno"];
+        const DEFAULT_EVALUATIONS = ["Tarea 1", "Tarea 2", "Examen Parcial"];
 
         let state = { 
             students: [], 
             teachers: [], 
             countAsistencias: 0, 
-            modulesList: ["Lectoescritura", "Matemáticas Básicas", "Ciencias y Entorno"],
-            currentEvaluations: ["Tarea 1", "Tarea 2", "Examen Parcial"],
+            modulesList: [...DEFAULT_MODULES],
+            // Mapa independiente por "Nivel|||Modulo": { "Tercer Ciclo (Nivel 4)|||Ciencias y Entorno": ["Tarea 1", ...] }
+            evaluationsByContext: {},
             currentUser: {
                 email: "",
                 rol: "Administrador", 
                 nivelAsignado: null
             }
         };
+
+        function getContextKey(nivel, modulo) {
+            return `${nivel || "General"}|||${modulo || "General"}`;
+        }
+
+        function getEvaluationsForContext(nivel, modulo) {
+            const key = getContextKey(nivel, modulo);
+            if (!Array.isArray(state.evaluationsByContext[key])) {
+                state.evaluationsByContext[key] = [...DEFAULT_EVALUATIONS];
+            }
+            return state.evaluationsByContext[key];
+        }
+
+        function setEvaluationsForContext(nivel, modulo, list) {
+            const key = getContextKey(nivel, modulo);
+            state.evaluationsByContext[key] = Array.from(new Set(list));
+            guardarCatalogoLocal();
+        }
+
+        function guardarCatalogoLocal() {
+            try {
+                localStorage.setItem(CONFIG.STORAGE_CATALOG_KEY, JSON.stringify({
+                    modulesList: state.modulesList,
+                    evaluationsByContext: state.evaluationsByContext
+                }));
+            } catch (e) {
+                console.warn("No se pudo guardar catálogo en localStorage:", e);
+            }
+        }
+
+        function cargarCatalogoLocal() {
+            try {
+                const raw = localStorage.getItem(CONFIG.STORAGE_CATALOG_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed.modulesList) && parsed.modulesList.length > 0) {
+                    state.modulesList = parsed.modulesList;
+                }
+                if (parsed.evaluationsByContext && typeof parsed.evaluationsByContext === "object") {
+                    state.evaluationsByContext = parsed.evaluationsByContext;
+                }
+            } catch (e) {
+                console.warn("No se pudo leer catálogo desde localStorage:", e);
+            }
+        }
 
         // FUNCIONES DE SEGURIDAD HTML / URL
         function escapeHtml(value) {
@@ -1013,6 +1067,7 @@
 
         window.onload = async function() {
             initTheme();
+            cargarCatalogoLocal();
 
             document.getElementById('tracker-date-select').valueAsDate = new Date();
             validarFechaLunesMartes();
@@ -1166,16 +1221,25 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('calificaciones')
-                    .select('modulo, evaluacion');
+                    .select('alumno_id, modulo, evaluacion');
                 if (!error && data && data.length > 0) {
                     const modSet = new Set(state.modulesList);
-                    const evalSet = new Set(state.currentEvaluations);
+                    const alumnoNivelMap = new Map(state.students.map(s => [s.id, s.nivel]));
+
                     data.forEach(row => {
                         if (row.modulo) modSet.add(row.modulo);
-                        if (row.evaluacion) evalSet.add(row.evaluacion);
+                        if (row.modulo && row.evaluacion) {
+                            const nivelAlumno = alumnoNivelMap.get(row.alumno_id);
+                            if (nivelAlumno) {
+                                const list = getEvaluationsForContext(nivelAlumno, row.modulo);
+                                if (!list.includes(row.evaluacion)) {
+                                    list.push(row.evaluacion);
+                                }
+                            }
+                        }
                     });
                     state.modulesList = Array.from(modSet);
-                    state.currentEvaluations = Array.from(evalSet);
+                    guardarCatalogoLocal();
                     poblarSelectModulos();
                 }
             } catch (e) {
@@ -1184,9 +1248,9 @@
         }
 
         async function cargarDatos() {
-            await cargarCatalogoNotasDesdeDB();
             await cargarMaestros();
             await cargarAlumnos();
+            await cargarCatalogoNotasDesdeDB();
             await cargarAsistenciasCount();
             renderDashboard();
         }
@@ -1323,6 +1387,7 @@
                 const nombreLimpio = nuevoModulo.trim();
                 if (!state.modulesList.includes(nombreLimpio)) {
                     state.modulesList.push(nombreLimpio);
+                    guardarCatalogoLocal();
                     poblarSelectModulos();
                     document.getElementById('grades-module-select').value = nombreLimpio;
                     cargarMatrizNotas();
@@ -1356,6 +1421,18 @@
                 } else {
                     const idx = state.modulesList.indexOf(moduloActual);
                     if (idx !== -1) state.modulesList[idx] = nombreLimpio;
+
+                    // Migrar evaluaciones guardadas por contexto para este módulo
+                    Object.keys(state.evaluationsByContext).forEach(key => {
+                        const parts = key.split("|||");
+                        if (parts[1] === moduloActual) {
+                            const newKey = getContextKey(parts[0], nombreLimpio);
+                            state.evaluationsByContext[newKey] = state.evaluationsByContext[key];
+                            delete state.evaluationsByContext[key];
+                        }
+                    });
+
+                    guardarCatalogoLocal();
                     poblarSelectModulos();
                     select.value = nombreLimpio;
                     cargarMatrizNotas();
@@ -1384,6 +1461,15 @@
                     if (state.modulesList.length === 0) {
                         state.modulesList = ["General"];
                     }
+
+                    Object.keys(state.evaluationsByContext).forEach(key => {
+                        const parts = key.split("|||");
+                        if (parts[1] === moduloActual) {
+                            delete state.evaluationsByContext[key];
+                        }
+                    });
+
+                    guardarCatalogoLocal();
                     poblarSelectModulos();
                     cargarMatrizNotas();
                     showToast(`Módulo "${moduloActual}" eliminado`);
@@ -1401,22 +1487,36 @@
             const nuevoNombre = prompt("Nuevo nombre para la tarea / evaluación:", nombreEval);
             if (nuevoNombre && nuevoNombre.trim() !== "" && nuevoNombre !== nombreEval) {
                 const nombreLimpio = nuevoNombre.trim();
+                const nivel = document.getElementById('grades-level-select').value;
                 const modulo = document.getElementById('grades-module-select').value;
+                const idsAlumnosNivel = state.students.filter(s => s.nivel === nivel).map(s => s.id);
 
-                const { error } = await supabaseClient
-                    .from('calificaciones')
-                    .update({ evaluacion: nombreLimpio })
-                    .eq('modulo', modulo)
-                    .eq('evaluacion', nombreEval);
+                if (idsAlumnosNivel.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('calificaciones')
+                        .update({ evaluacion: nombreLimpio })
+                        .eq('modulo', modulo)
+                        .eq('evaluacion', nombreEval)
+                        .in('alumno_id', idsAlumnosNivel);
 
-                if (error) {
-                    showToast('Error al renombrar evaluación: ' + error.message, 'error');
-                } else {
-                    const idx = state.currentEvaluations.indexOf(nombreEval);
-                    if (idx !== -1) state.currentEvaluations[idx] = nombreLimpio;
-                    cargarMatrizNotas();
-                    showToast('Evaluación renombrada');
+                    if (error) {
+                        showToast('Error al renombrar evaluación: ' + error.message, 'error');
+                        return;
+                    }
                 }
+
+                const evalList = getEvaluationsForContext(nivel, modulo);
+                const idx = evalList.indexOf(nombreEval);
+                if (idx !== -1) {
+                    if (evalList.includes(nombreLimpio)) {
+                        evalList.splice(idx, 1);
+                    } else {
+                        evalList[idx] = nombreLimpio;
+                    }
+                }
+                setEvaluationsForContext(nivel, modulo, evalList);
+                cargarMatrizNotas();
+                showToast('Evaluación renombrada en este módulo y nivel');
             }
         }
 
@@ -1425,22 +1525,30 @@
                 showToast('No tienes permisos para eliminar evaluaciones', 'error');
                 return;
             }
-            if (confirm(`¿Seguro que deseas eliminar "${nombreEval}" y sus notas asociadas?`)) {
-                const modulo = document.getElementById('grades-module-select').value;
+            const nivel = document.getElementById('grades-level-select').value;
+            const modulo = document.getElementById('grades-module-select').value;
 
-                const { error } = await supabaseClient
-                    .from('calificaciones')
-                    .delete()
-                    .eq('modulo', modulo)
-                    .eq('evaluacion', nombreEval);
+            if (confirm(`¿Seguro que deseas eliminar "${nombreEval}" de ${modulo} (${nivel}) y sus notas asociadas?`)) {
+                const idsAlumnosNivel = state.students.filter(s => s.nivel === nivel).map(s => s.id);
 
-                if (!error) {
-                    state.currentEvaluations = state.currentEvaluations.filter(e => e !== nombreEval);
-                    cargarMatrizNotas();
-                    showToast(`Tarea "${nombreEval}" eliminada`);
-                } else {
-                    showToast('Error al eliminar tarea: ' + error.message, 'error');
+                if (idsAlumnosNivel.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('calificaciones')
+                        .delete()
+                        .eq('modulo', modulo)
+                        .eq('evaluacion', nombreEval)
+                        .in('alumno_id', idsAlumnosNivel);
+
+                    if (error) {
+                        showToast('Error al eliminar tarea: ' + error.message, 'error');
+                        return;
+                    }
                 }
+
+                const evalList = getEvaluationsForContext(nivel, modulo).filter(e => e !== nombreEval);
+                setEvaluationsForContext(nivel, modulo, evalList);
+                cargarMatrizNotas();
+                showToast(`Tarea "${nombreEval}" eliminada`);
             }
         }
 
@@ -1449,25 +1557,32 @@
             const modulo = document.getElementById('grades-module-select').value;
 
             const alumnosNivel = state.students.filter(s => s.nivel === nivel);
+            const idsAlumnosNivel = alumnosNivel.map(s => s.id);
 
-            const { data: notasDB } = await supabaseClient
-                .from('calificaciones')
-                .select('*')
-                .eq('modulo', modulo);
-
-            const evaluacionesUnicas = new Set(state.currentEvaluations);
-            if (notasDB) {
-                notasDB.forEach(n => evaluacionesUnicas.add(n.evaluacion));
+            let notasDB = [];
+            if (idsAlumnosNivel.length > 0) {
+                const { data } = await supabaseClient
+                    .from('calificaciones')
+                    .select('*')
+                    .eq('modulo', modulo)
+                    .in('alumno_id', idsAlumnosNivel);
+                if (data) notasDB = data;
             }
+
+            // Evaluaciones propias de este nivel + módulo, más cualquier nota ya existente para alumnos de este nivel y módulo
+            const evalContext = getEvaluationsForContext(nivel, modulo);
+            const evaluacionesUnicas = new Set(evalContext);
+            notasDB.forEach(n => {
+                if (n.evaluacion) evaluacionesUnicas.add(n.evaluacion);
+            });
             const evalList = Array.from(evaluacionesUnicas);
+            setEvaluationsForContext(nivel, modulo, evalList);
 
             const mapNotas = {};
-            if (notasDB) {
-                notasDB.forEach(n => {
-                    if (!mapNotas[n.alumno_id]) mapNotas[n.alumno_id] = {};
-                    mapNotas[n.alumno_id][n.evaluacion] = n.nota;
-                });
-            }
+            notasDB.forEach(n => {
+                if (!mapNotas[n.alumno_id]) mapNotas[n.alumno_id] = {};
+                mapNotas[n.alumno_id][n.evaluacion] = n.nota;
+            });
 
             const headerRow = document.getElementById('grades-table-header');
             headerRow.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Alumno</th>`;
@@ -1478,15 +1593,15 @@
                 const safeEvText = escapeHtml(ev);
                 const safeEvAttr = escapeAttr(ev);
                 headerRow.innerHTML += `
-                    <th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300 group relative">
-                        <div class="flex items-center justify-center space-x-1">
+                    <th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300">
+                        <div class="flex flex-col items-center justify-center space-y-1">
                             <span>${safeEvText}</span>
                             ${canEdit ? `
-                            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 ml-1">
-                                <button onclick="editarEvaluacion('${safeEvAttr}')" title="Editar Tarea" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-[10px]">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button type="button" onclick="editarEvaluacion('${safeEvAttr}')" title="Editar nombre de tarea" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-[11px] p-0.5">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <button onclick="eliminarEvaluacion('${safeEvAttr}')" title="Eliminar Tarea" class="text-red-600 dark:text-red-400 hover:text-red-800 text-[10px]">
+                                <button type="button" onclick="eliminarEvaluacion('${safeEvAttr}')" title="Eliminar tarea" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-[11px] p-0.5">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>` : ''}
@@ -1576,6 +1691,9 @@
                 showToast('No tienes permisos para agregar actividades', 'error');
                 return;
             }
+            const nivel = document.getElementById('grades-level-select').value;
+            const modulo = document.getElementById('grades-module-select').value;
+            document.getElementById('eval-context-label').textContent = `${modulo} • ${nivel}`;
             document.getElementById('evaluation-form')?.reset();
             document.getElementById('eval-fecha').valueAsDate = new Date();
             document.getElementById('evaluation-modal').classList.remove('hidden');
@@ -1584,12 +1702,20 @@
         function handleEvaluationSubmit(e) {
             e.preventDefault();
             const nombre = document.getElementById('eval-nombre').value.trim();
-            if (nombre && !state.currentEvaluations.includes(nombre)) {
-                state.currentEvaluations.push(nombre);
+            if (!nombre) return;
+
+            const nivel = document.getElementById('grades-level-select').value;
+            const modulo = document.getElementById('grades-module-select').value;
+            const evalList = getEvaluationsForContext(nivel, modulo);
+
+            if (!evalList.includes(nombre)) {
+                evalList.push(nombre);
+                setEvaluationsForContext(nivel, modulo, evalList);
             }
+
             closeModal('evaluation-modal');
             cargarMatrizNotas();
-            showToast('Actividad agregada a la planilla');
+            showToast(`Actividad "${nombre}" agregada a ${modulo}`);
         }
 
         async function guardarNotas() {
@@ -1782,12 +1908,14 @@
                 document.getElementById('report-stat-avg-grade').textContent = '0.0';
                 document.getElementById('report-grades-tbody').innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${escapeHtml(nivel)}</td></tr>`;
             } else {
+                const idsAlumnosNivel = alumnosNivel.map(s => s.id);
                 const { data: calificaciones } = await supabaseClient
                     .from('calificaciones')
                     .select('*')
-                    .eq('modulo', modulo);
+                    .eq('modulo', modulo)
+                    .in('alumno_id', idsAlumnosNivel);
 
-                const evalsModulo = new Set();
+                const evalsModulo = new Set(getEvaluationsForContext(nivel, modulo));
                 const mapaNotas = {};
 
                 if (calificaciones) {
@@ -2602,3 +2730,6 @@
     </script>
 </body>
 </html>
+```[cite: 7]
+
+Solo reemplaza tu `index.html` en GitHub con este código, guarda/haz *commit* y recarga tu página (puedes hacer `Ctrl + Shift + R` para limpiar caché del navegador). ¿Te gustaría revisar algún otro detalle en **Notas / Tareas** o en otra sección después de probarlo?
