@@ -911,6 +911,30 @@
             }
         };
 
+        // FUNCIONES DE SEGURIDAD HTML / URL
+        function escapeHtml(value) {
+            if (value === null || value === undefined) return "";
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function escapeAttr(value) {
+            return escapeHtml(value).replace(/`/g, "&#96;");
+        }
+
+        function sanitizeUrl(url) {
+            if (!url || typeof url !== "string") return null;
+            const trimmed = url.trim();
+            if (/^https:\/\//i.test(trimmed)) {
+                return escapeAttr(trimmed);
+            }
+            return null;
+        }
+
         // LÓGICA DE MODO OSCURO
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
@@ -988,10 +1012,6 @@
             if (data) {
                 state.currentUser.rol = data.rol_nivel || 'Colaborador';
                 state.currentUser.nivelAsignado = (data.rol_nivel === 'Administrador') ? null : (data.nivel || 'Inicial (Nivel 0)');
-            } else if (email === 'carlosnec@gmail.com') {
-                // Respaldo de seguridad por correo admin principal
-                state.currentUser.rol = 'Administrador';
-                state.currentUser.nivelAsignado = null;
             } else {
                 state.currentUser.rol = 'Colaborador';
                 state.currentUser.nivelAsignado = 'Inicial (Nivel 0)';
@@ -1006,7 +1026,7 @@
                 if (state.currentUser.rol === 'Administrador') {
                     roleBadge.textContent = `Rol: Administrador (Todos los Niveles)`;
                 } else {
-                    roleBadge.textContent = `Rol: ${state.currentUser.rol} (${state.currentUser.nivelAsignado})`;
+                    roleBadge.textContent = `Rol: ${escapeHtml(state.currentUser.rol)} (${escapeHtml(state.currentUser.nivelAsignado)})`;
                 }
                 roleBadge.classList.remove('hidden');
             }
@@ -1122,7 +1142,7 @@
             }
 
             select.innerHTML = '<option value="">-- Seleccionar Maestro --</option>' + 
-                lideres.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
+                lideres.map(m => `<option value="${escapeAttr(m.nombre)}">${escapeHtml(m.nombre)}</option>`).join('');
         }
 
         async function cargarAlumnos() {
@@ -1166,7 +1186,9 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs font-semibold text-white flex items-center space-x-2 ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`;
-            toast.innerHTML = `<span>${message}</span>`;
+            const span = document.createElement('span');
+            span.textContent = message;
+            toast.appendChild(span);
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
@@ -1214,7 +1236,7 @@
             selects.forEach(select => {
                 if (!select) return;
                 const currentVal = select.value;
-                select.innerHTML = state.modulesList.map(m => `<option value="${m}">${m}</option>`).join('');
+                select.innerHTML = state.modulesList.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`).join('');
                 if (currentVal && state.modulesList.includes(currentVal)) {
                     select.value = currentVal;
                 }
@@ -1383,16 +1405,18 @@
             const canEdit = state.currentUser.rol === 'Administrador' || state.currentUser.rol === 'Líder de nivel';
 
             evalList.forEach(ev => {
+                const safeEvText = escapeHtml(ev);
+                const safeEvAttr = escapeAttr(ev);
                 headerRow.innerHTML += `
                     <th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300 group relative">
                         <div class="flex items-center justify-center space-x-1">
-                            <span>${ev}</span>
+                            <span>${safeEvText}</span>
                             ${canEdit ? `
                             <div class="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 ml-1">
-                                <button onclick="editarEvaluacion('${ev}')" title="Editar Tarea" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-[10px]">
+                                <button onclick="editarEvaluacion('${safeEvAttr}')" title="Editar Tarea" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-[10px]">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <button onclick="eliminarEvaluacion('${ev}')" title="Eliminar Tarea" class="text-red-600 dark:text-red-400 hover:text-red-800 text-[10px]">
+                                <button onclick="eliminarEvaluacion('${safeEvAttr}')" title="Eliminar Tarea" class="text-red-600 dark:text-red-400 hover:text-red-800 text-[10px]">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>` : ''}
@@ -1406,19 +1430,20 @@
             tbody.innerHTML = '';
 
             if (alumnosNivel.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${evalList.length + 2}" class="py-8 text-center text-slate-400 text-sm">No hay alumnos registrados en ${nivel}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${evalList.length + 2}" class="py-8 text-center text-slate-400 text-sm">No hay alumnos registrados en ${escapeHtml(nivel)}</td></tr>`;
                 return;
             }
 
             alumnosNivel.forEach(s => {
+                const safeId = escapeAttr(s.id);
                 let inputsHtml = '';
                 evalList.forEach(ev => {
-                    const valNota = (mapNotas[s.id] && mapNotas[s.id][ev] !== undefined && mapNotas[s.id][ev] !== null) ? mapNotas[s.id][ev] : '';
+                    const valNota = (mapNotas[s.id] && mapNotas[s.id][ev] !== undefined && mapNotas[s.id][ev] !== null) ? escapeAttr(mapNotas[s.id][ev]) : '';
                     inputsHtml += `
                         <td class="py-2.5 px-2 text-center">
                             <input type="number" step="0.1" min="0" max="10" 
-                                data-alumno-id="${s.id}" 
-                                data-evaluacion="${ev}" 
+                                data-alumno-id="${safeId}" 
+                                data-evaluacion="${escapeAttr(ev)}" 
                                 value="${valNota}" 
                                 oninput="calcularPromedioFila(this)" 
                                 placeholder="-" 
@@ -1428,8 +1453,8 @@
                 });
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-all" id="student-row-${s.id}">
-                        <td class="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-all" id="student-row-${safeId}">
+                        <td class="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</td>
                         ${inputsHtml}
                         <td class="py-3 px-4 text-center">
                             <span class="row-promedio font-bold text-sm text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-emerald-800">-</span>
@@ -1560,7 +1585,7 @@
 
             // A) REPORTE ASISTENCIA ALUMNOS
             if (alumnosNivel.length === 0) {
-                document.getElementById('report-attendance-tbody').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${nivel}</td></tr>`;
+                document.getElementById('report-attendance-tbody').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${escapeHtml(nivel)}</td></tr>`;
             } else {
                 const idsAlumnos = alumnosNivel.map(s => String(s.id));
                 const { data: asistencias } = await supabaseClient
@@ -1608,8 +1633,8 @@
 
                     tbodyAtt.innerHTML += `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
-                            <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400">${s.maestro_responsable || 'No asignado'}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400">${escapeHtml(s.maestro_responsable || 'No asignado')}</td>
                             <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">${cAsistidas} / ${totalClases}</td>
                             <td class="py-3 px-4 text-center font-extrabold text-sm dark:text-white">${pct}%</td>
                             <td class="py-3 px-4 text-right">
@@ -1628,7 +1653,7 @@
             tbodyTeachers.innerHTML = '';
 
             if (maestrosNivel.length === 0) {
-                tbodyTeachers.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay maestros asignados a ${nivel}</td></tr>`;
+                tbodyTeachers.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay maestros asignados a ${escapeHtml(nivel)}</td></tr>`;
             } else {
                 const idsMaestros = maestrosNivel.map(m => String(m.id));
                 const { data: asistenciasMaestros } = await supabaseClient
@@ -1670,8 +1695,8 @@
 
                     tbodyTeachers.innerHTML += `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${m.nombre}</td>
-                            <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400">${m.rol_nivel || 'Docente'}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(m.nombre)}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400">${escapeHtml(m.rol_nivel || 'Docente')}</td>
                             <td class="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-300">${cAsistidas} / ${totalClasesM}</td>
                             <td class="py-3 px-4 text-center font-extrabold text-sm dark:text-white">${pct}%</td>
                             <td class="py-3 px-4 text-right">
@@ -1685,7 +1710,7 @@
             // C) REPORTE NOTAS
             if (alumnosNivel.length === 0) {
                 document.getElementById('report-stat-avg-grade').textContent = '0.0';
-                document.getElementById('report-grades-tbody').innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${nivel}</td></tr>`;
+                document.getElementById('report-grades-tbody').innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${escapeHtml(nivel)}</td></tr>`;
             } else {
                 const { data: calificaciones } = await supabaseClient
                     .from('calificaciones')
@@ -1708,7 +1733,7 @@
                 const headerGrades = document.getElementById('report-grades-header');
                 headerGrades.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Alumno</th>`;
                 evalList.forEach(ev => {
-                    headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300">${ev}</th>`;
+                    headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300">${escapeHtml(ev)}</th>`;
                 });
                 headerGrades.innerHTML += `
                     <th class="py-3 px-4 text-center font-bold text-indigo-700 dark:text-indigo-400">Promedio</th>
@@ -1755,7 +1780,7 @@
 
                     tbodyGrades.innerHTML += `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</td>
                             ${colNotasHtml}
                             <td class="py-3 px-4 text-center font-extrabold text-sm text-indigo-700 dark:text-indigo-400">${promedioTxt}</td>
                             <td class="py-3 px-4 text-right">${statusBadge}</td>
@@ -1788,16 +1813,16 @@
             }
 
             if (alumnosNivel.length === 0) {
-                tbodyAlumnos.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${nivelSeleccionado}</td></tr>`;
+                tbodyAlumnos.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${escapeHtml(nivelSeleccionado)}</td></tr>`;
             } else {
                 alumnosNivel.forEach(s => {
                     const isChecked = mapAsistenciaAlumnos[s.id] === true ? 'checked' : '';
                     tbodyAlumnos.innerHTML += `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">${s.nombres} ${s.apellidos}</td>
-                            <td class="py-2.5 px-3 text-xs text-slate-500 dark:text-slate-400">${s.maestro_responsable || 'No asignado'}</td>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</td>
+                            <td class="py-2.5 px-3 text-xs text-slate-500 dark:text-slate-400">${escapeHtml(s.maestro_responsable || 'No asignado')}</td>
                             <td class="py-2.5 px-3 text-center">
-                                <input type="checkbox" data-alumno-id="${s.id}" ${isChecked} class="student-checkbox w-5 h-5 text-brand-600 rounded focus:ring-brand-500 border-slate-300 dark:border-slate-700 dark:bg-slate-900">
+                                <input type="checkbox" data-alumno-id="${escapeAttr(s.id)}" ${isChecked} class="student-checkbox w-5 h-5 text-brand-600 rounded focus:ring-brand-500 border-slate-300 dark:border-slate-700 dark:bg-slate-900">
                             </td>
                         </tr>
                     `;
@@ -1827,12 +1852,12 @@
                     containerMaestros.innerHTML += `
                         <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
                             <div>
-                                <div class="font-bold text-slate-800 dark:text-slate-100">${m.nombre}</div>
-                                <div class="text-[10px] text-slate-400">${m.rol_nivel || 'Docente'}</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100">${escapeHtml(m.nombre)}</div>
+                                <div class="text-[10px] text-slate-400">${escapeHtml(m.rol_nivel || 'Docente')}</div>
                             </div>
                             <label class="flex items-center space-x-2 cursor-pointer">
                                 <span class="text-slate-500 dark:text-slate-400 font-medium">Asistió</span>
-                                <input type="checkbox" data-maestro-id="${m.id}" ${isChecked} class="teacher-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-700 dark:bg-slate-900 focus:ring-indigo-500">
+                                <input type="checkbox" data-maestro-id="${escapeAttr(m.id)}" ${isChecked} class="teacher-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-700 dark:bg-slate-900 focus:ring-indigo-500">
                             </label>
                         </div>
                     `;
@@ -2013,18 +2038,20 @@
                 return;
             }
             recent.forEach(s => {
-                const avatar = s.foto_url 
-                    ? `<img src="${s.foto_url}" class="w-7 h-7 rounded-full object-cover">`
-                    : `<div class="w-7 h-7 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs">${s.nombres ? s.nombres[0] : 'A'}</div>`;
+                const safeFoto = sanitizeUrl(s.foto_url);
+                const inicial = escapeHtml(s.nombres ? s.nombres[0] : 'A');
+                const avatar = safeFoto 
+                    ? `<img src="${safeFoto}" class="w-7 h-7 rounded-full object-cover">`
+                    : `<div class="w-7 h-7 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs">${inicial}</div>`;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50">
                         <td class="py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center space-x-2">
                             ${avatar}
-                            <span>${s.nombres} ${s.apellidos}</span>
+                            <span>${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</span>
                         </td>
-                        <td class="py-3 text-slate-500 dark:text-slate-400">${s.maestro_responsable || 'No asignado'}</td>
-                        <td class="py-3"><span class="px-2.5 py-1 bg-brand-50 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
+                        <td class="py-3 text-slate-500 dark:text-slate-400">${escapeHtml(s.maestro_responsable || 'No asignado')}</td>
+                        <td class="py-3"><span class="px-2.5 py-1 bg-brand-50 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 rounded-lg text-xs font-semibold">${escapeHtml(s.nivel || 'Inicial (Nivel 0)')}</span></td>
                         <td class="py-3 text-right">
                             <button onclick="switchTab('students')" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 text-xs font-semibold">Ver <i class="fa-solid fa-arrow-right ml-1"></i></button>
                         </td>
@@ -2062,16 +2089,24 @@
             const canDelete = rol === 'Administrador' || rol === 'Líder de nivel';
 
             filtered.forEach(s => {
-                const avatar = s.foto_url 
-                    ? `<img src="${s.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700">`
-                    : `<div class="w-9 h-9 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs border border-brand-200 dark:border-emerald-800">${s.nombres ? s.nombres[0] : 'A'}</div>`;
+                const safeFoto = sanitizeUrl(s.foto_url);
+                const safeDui = sanitizeUrl(s.dui_url);
+                const safePartida = sanitizeUrl(s.partida_url);
+                const safeCert = sanitizeUrl(s.certificado_url);
+                const safeId = escapeAttr(s.id);
+                const inicial = escapeHtml(s.nombres ? s.nombres[0] : 'A');
+                const edadTexto = s.edad ? `${escapeHtml(s.edad)} años` : 'Edad S/D';
+
+                const avatar = safeFoto 
+                    ? `<img src="${safeFoto}" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700">`
+                    : `<div class="w-9 h-9 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs border border-brand-200 dark:border-emerald-800">${inicial}</div>`;
 
                 const docsIcons = `
                     <div class="flex justify-center space-x-2 text-sm">
-                        ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" title="DUI" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"><i class="fa-solid fa-id-card"></i></a>` : ''}
-                        ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" title="Partida" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800"><i class="fa-solid fa-file-contract"></i></a>` : ''}
-                        ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" title="Certificado" class="text-amber-600 dark:text-amber-400 hover:text-amber-800"><i class="fa-solid fa-award"></i></a>` : ''}
-                        ${!s.dui_url && !s.partida_url && !s.certificado_url ? `<span class="text-xs text-slate-300 dark:text-slate-600">-</span>` : ''}
+                        ${safeDui ? `<a href="${safeDui}" target="_blank" rel="noopener noreferrer" title="DUI" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"><i class="fa-solid fa-id-card"></i></a>` : ''}
+                        ${safePartida ? `<a href="${safePartida}" target="_blank" rel="noopener noreferrer" title="Partida" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800"><i class="fa-solid fa-file-contract"></i></a>` : ''}
+                        ${safeCert ? `<a href="${safeCert}" target="_blank" rel="noopener noreferrer" title="Certificado" class="text-amber-600 dark:text-amber-400 hover:text-amber-800"><i class="fa-solid fa-award"></i></a>` : ''}
+                        ${!safeDui && !safePartida && !safeCert ? `<span class="text-xs text-slate-300 dark:text-slate-600">-</span>` : ''}
                     </div>
                 `;
 
@@ -2080,21 +2115,21 @@
                         <td class="py-3 px-4 flex items-center space-x-3">
                             ${avatar}
                             <div>
-                                <div class="font-bold text-slate-900 dark:text-slate-100">${s.nombres} ${s.apellidos}</div>
-                                <div class="text-xs text-slate-400">${s.edad ? s.edad + ' años' : 'Edad S/D'}</div>
+                                <div class="font-bold text-slate-900 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</div>
+                                <div class="text-xs text-slate-400">${edadTexto}</div>
                             </div>
                         </td>
                         <td class="py-3 px-4">
-                            <div class="text-slate-800 dark:text-slate-200 font-medium text-xs">${s.documento || 'Sin Documento'}</div>
-                            <div class="text-xs text-slate-400">${s.telefono || 'Sin Teléfono'}</div>
+                            <div class="text-slate-800 dark:text-slate-200 font-medium text-xs">${escapeHtml(s.documento || 'Sin Documento')}</div>
+                            <div class="text-xs text-slate-400">${escapeHtml(s.telefono || 'Sin Teléfono')}</div>
                         </td>
-                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 text-xs">${s.direccion || 'Sin Dirección'}</td>
-                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium text-xs">${s.maestro_responsable || 'No asignado'}</td>
-                        <td class="py-3 px-4"><span class="px-2.5 py-1 bg-brand-50 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 rounded-lg text-xs font-semibold">${s.nivel || 'Inicial (Nivel 0)'}</span></td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 text-xs">${escapeHtml(s.direccion || 'Sin Dirección')}</td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium text-xs">${escapeHtml(s.maestro_responsable || 'No asignado')}</td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-1 bg-brand-50 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 rounded-lg text-xs font-semibold">${escapeHtml(s.nivel || 'Inicial (Nivel 0)')}</span></td>
                         <td class="py-3 px-4 text-center">${docsIcons}</td>
                         <td class="py-3 px-4 text-right space-x-1">
-                            <button onclick="editStudent(${s.id})" title="Editar Alumno" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
-                            ${canDelete ? `<button onclick="deleteStudent(${s.id})" title="Eliminar Alumno" class="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            <button onclick="editStudent(${safeId})" title="Editar Alumno" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+                            ${canDelete ? `<button onclick="deleteStudent(${safeId})" title="Eliminar Alumno" class="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </td>
                     </tr>
                 `;
@@ -2250,9 +2285,14 @@
             }
 
             filtered.forEach(m => {
-                const avatar = m.foto_url 
-                    ? `<img src="${m.foto_url}" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700">`
-                    : `<div class="w-9 h-9 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs border border-brand-200 dark:border-emerald-800">${m.nombre ? m.nombre[0] : 'M'}</div>`;
+                const safeFoto = sanitizeUrl(m.foto_url);
+                const safeDuiAdjunto = sanitizeUrl(m.dui_adjunto_url);
+                const safeId = escapeAttr(m.id);
+                const inicial = escapeHtml(m.nombre ? m.nombre[0] : 'M');
+
+                const avatar = safeFoto 
+                    ? `<img src="${safeFoto}" class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700">`
+                    : `<div class="w-9 h-9 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs border border-brand-200 dark:border-emerald-800">${inicial}</div>`;
 
                 const rolColor = m.rol_nivel === 'Administrador' ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300' :
                                  m.rol_nivel === 'Líder de nivel' ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300' :
@@ -2263,25 +2303,25 @@
                         <td class="py-3 px-4 flex items-center space-x-3">
                             ${avatar}
                             <div>
-                                <div class="font-bold text-slate-900 dark:text-slate-100">${m.nombre}</div>
-                                <div class="text-xs text-slate-400">${m.email || 'Sin Correo'}</div>
+                                <div class="font-bold text-slate-900 dark:text-slate-100">${escapeHtml(m.nombre)}</div>
+                                <div class="text-xs text-slate-400">${escapeHtml(m.email || 'Sin Correo')}</div>
                             </div>
                         </td>
                         <td class="py-3 px-4">
-                            <div class="text-slate-800 dark:text-slate-200 font-medium text-xs">${m.dui || 'Sin DUI'}</div>
-                            <div class="text-xs text-slate-400">${m.telefono || 'Sin Teléfono'}</div>
+                            <div class="text-slate-800 dark:text-slate-200 font-medium text-xs">${escapeHtml(m.dui || 'Sin DUI')}</div>
+                            <div class="text-xs text-slate-400">${escapeHtml(m.telefono || 'Sin Teléfono')}</div>
                         </td>
-                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 text-xs">${m.direccion || 'Sin Dirección'}</td>
-                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium text-xs">${m.nivel || 'Sin Asignar'}</td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 text-xs">${escapeHtml(m.direccion || 'Sin Dirección')}</td>
+                        <td class="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium text-xs">${escapeHtml(m.nivel || 'Sin Asignar')}</td>
                         <td class="py-3 px-4">
-                            <span class="px-2.5 py-1 ${rolColor} rounded-lg text-xs font-semibold">${m.rol_nivel || 'Colaborador'}</span>
+                            <span class="px-2.5 py-1 ${rolColor} rounded-lg text-xs font-semibold">${escapeHtml(m.rol_nivel || 'Colaborador')}</span>
                         </td>
                         <td class="py-3 px-4 text-center">
-                            ${m.dui_adjunto_url ? `<a href="${m.dui_adjunto_url}" target="_blank" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>Ver DUI</a>` : '<span class="text-slate-300 dark:text-slate-600 text-xs">-</span>'}
+                            ${safeDuiAdjunto ? `<a href="${safeDuiAdjunto}" target="_blank" rel="noopener noreferrer" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>Ver DUI</a>` : '<span class="text-slate-300 dark:text-slate-600 text-xs">-</span>'}
                         </td>
                         <td class="py-3 px-4 text-right space-x-1">
-                            <button onclick="editTeacher('${m.id}')" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteTeacher('${m.id}')" class="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="editTeacher('${safeId}')" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteTeacher('${safeId}')" class="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
@@ -2385,11 +2425,15 @@
                         return;
                     }
                 } else if (password) {
-                    const { error: passError } = await supabaseClient.auth.updateUser({ password: password });
-                    if (passError) {
-                        showToast('Aviso sobre la contraseña: ' + passError.message, 'error');
+                    if (mExistente && mExistente.email === state.currentUser.email) {
+                        const { error: passError } = await supabaseClient.auth.updateUser({ password: password });
+                        if (passError) {
+                            showToast('Aviso sobre la contraseña: ' + passError.message, 'error');
+                        } else {
+                            showToast('Contraseña de tu cuenta actualizada en Supabase');
+                        }
                     } else {
-                        showToast('Contraseña actualizada en la autenticación de Supabase');
+                        showToast('Los datos del maestro se guardarán. Para cambiar la contraseña de otro usuario, hazlo desde Authentication en Supabase.', 'error');
                     }
                 }
 
@@ -2420,7 +2464,7 @@
                 if (error) {
                     showToast('Error al guardar maestro en la base de datos: ' + error.message, 'error');
                 } else {
-                    showToast(idInput ? 'Maestro y credenciales actualizados' : 'Maestro y usuario registrados con éxito');
+                    showToast(idInput ? 'Maestro actualizado con éxito' : 'Maestro y usuario registrados con éxito');
                     closeModal('teacher-modal');
                     await cargarMaestros();
                 }
@@ -2467,21 +2511,27 @@
             }
 
             conDocumentos.forEach(s => {
+                const safeFoto = sanitizeUrl(s.foto_url);
+                const safeDui = sanitizeUrl(s.dui_url);
+                const safePartida = sanitizeUrl(s.partida_url);
+                const safeCert = sanitizeUrl(s.certificado_url);
+                const inicial = escapeHtml(s.nombres ? s.nombres[0] : 'A');
+
                 grid.innerHTML += `
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex items-center space-x-3 mb-1">
-                                ${s.foto_url ? `<img src="${s.foto_url}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm">${s.nombres ? s.nombres[0] : 'A'}</div>`}
+                                ${safeFoto ? `<img src="${safeFoto}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-brand-100 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm">${inicial}</div>`}
                                 <div>
-                                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">${s.nombres} ${s.apellidos}</h4>
-                                    <p class="text-xs text-slate-400">${s.maestro_responsable || 'Maestro no asignado'}</p>
+                                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</h4>
+                                    <p class="text-xs text-slate-400">${escapeHtml(s.maestro_responsable || 'Maestro no asignado')}</p>
                                 </div>
                             </div>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${s.direccion || 'Sin dirección registrada'}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${escapeHtml(s.direccion || 'Sin dirección registrada')}</p>
                             <div class="space-y-2 text-xs border-t border-slate-100 dark:border-slate-700 pt-3">
-                                ${s.dui_url ? `<a href="${s.dui_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-id-card text-indigo-600 dark:text-indigo-400 mr-2"></i>DUI / Cédula</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
-                                ${s.partida_url ? `<a href="${s.partida_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-file-contract text-emerald-600 dark:text-emerald-400 mr-2"></i>Partida Nacimiento</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
-                                ${s.certificado_url ? `<a href="${s.certificado_url}" target="_blank" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-award text-amber-600 dark:text-amber-400 mr-2"></i>Certificados</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${safeDui ? `<a href="${safeDui}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-id-card text-indigo-600 dark:text-indigo-400 mr-2"></i>DUI / Cédula</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${safePartida ? `<a href="${safePartida}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-file-contract text-emerald-600 dark:text-emerald-400 mr-2"></i>Partida Nacimiento</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${safeCert ? `<a href="${safeCert}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-award text-amber-600 dark:text-amber-400 mr-2"></i>Certificados</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
                             </div>
                         </div>
                     </div>
