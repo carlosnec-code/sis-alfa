@@ -893,7 +893,8 @@
         // CONFIGURACIÓN DE PARÁMETROS Y SUPABASE
         const CONFIG = {
             SUPABASE_URL: "https://cegulltqwhgovouncvfc.supabase.co",
-            SUPABASE_KEY: "sb_publishable_H5f5I2xa7o--Mun2VOvtAw_ziWidTDB"
+            SUPABASE_KEY: "sb_publishable_H5f5I2xa7o--Mun2VOvtAw_ziWidTDB",
+            STORAGE_BUCKET: "documentos_alumnos"
         };
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
@@ -933,6 +934,53 @@
                 return escapeAttr(trimmed);
             }
             return null;
+        }
+
+        function extractStoragePath(urlOrPath) {
+            if (!urlOrPath || typeof urlOrPath !== "string") return null;
+            const trimmed = urlOrPath.trim();
+            if (!trimmed.startsWith("http")) {
+                return trimmed.replace(/^\/+/, "");
+            }
+            const marker = `/object/public/${CONFIG.STORAGE_BUCKET}/`;
+            const idx = trimmed.indexOf(marker);
+            if (idx !== -1) {
+                return decodeURIComponent(trimmed.slice(idx + marker.length).split("?")[0]);
+            }
+            const signedMarker = `/object/sign/${CONFIG.STORAGE_BUCKET}/`;
+            const sIdx = trimmed.indexOf(signedMarker);
+            if (sIdx !== -1) {
+                return decodeURIComponent(trimmed.slice(sIdx + signedMarker.length).split("?")[0]);
+            }
+            return null;
+        }
+
+        async function resolveFileUrl(urlOrPath) {
+            if (!urlOrPath || typeof urlOrPath !== "string") return null;
+            const trimmed = urlOrPath.trim();
+            const path = extractStoragePath(trimmed);
+            if (path) {
+                const { data, error } = await supabaseClient.storage
+                    .from(CONFIG.STORAGE_BUCKET)
+                    .createSignedUrl(path, 3600);
+                if (!error && data && data.signedUrl) {
+                    return data.signedUrl;
+                }
+            }
+            if (/^https:\/\//i.test(trimmed)) {
+                return trimmed;
+            }
+            return null;
+        }
+
+        async function openProtectedFile(urlOrPath) {
+            if (!urlOrPath) return;
+            const resolved = await resolveFileUrl(urlOrPath);
+            if (resolved && /^https:\/\//i.test(resolved)) {
+                window.open(resolved, "_blank", "noopener,noreferrer");
+            } else {
+                showToast("No se pudo abrir el archivo adjunto", "error");
+            }
         }
 
         // LÓGICA DE MODO OSCURO
@@ -1114,7 +1162,29 @@
             }
         }
 
+        async function cargarCatalogoNotasDesdeDB() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('calificaciones')
+                    .select('modulo, evaluacion');
+                if (!error && data && data.length > 0) {
+                    const modSet = new Set(state.modulesList);
+                    const evalSet = new Set(state.currentEvaluations);
+                    data.forEach(row => {
+                        if (row.modulo) modSet.add(row.modulo);
+                        if (row.evaluacion) evalSet.add(row.evaluacion);
+                    });
+                    state.modulesList = Array.from(modSet);
+                    state.currentEvaluations = Array.from(evalSet);
+                    poblarSelectModulos();
+                }
+            } catch (e) {
+                console.warn("No se pudo sincronizar catálogo desde calificaciones:", e);
+            }
+        }
+
         async function cargarDatos() {
+            await cargarCatalogoNotasDesdeDB();
             await cargarMaestros();
             await cargarAlumnos();
             await cargarAsistenciasCount();
@@ -1587,7 +1657,7 @@
             if (alumnosNivel.length === 0) {
                 document.getElementById('report-attendance-tbody').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${escapeHtml(nivel)}</td></tr>`;
             } else {
-                const idsAlumnos = alumnosNivel.map(s => String(s.id));
+                const idsAlumnos = alumnosNivel.map(s => s.id);
                 const { data: asistencias } = await supabaseClient
                     .from('asistencia')
                     .select('*')
@@ -1655,7 +1725,7 @@
             if (maestrosNivel.length === 0) {
                 tbodyTeachers.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No hay maestros asignados a ${escapeHtml(nivel)}</td></tr>`;
             } else {
-                const idsMaestros = maestrosNivel.map(m => String(m.id));
+                const idsMaestros = maestrosNivel.map(m => m.id);
                 const { data: asistenciasMaestros } = await supabaseClient
                     .from('asistencia_maestros')
                     .select('*')
@@ -1905,7 +1975,7 @@
                 const registrosAlumnos = [];
                 studentCheckboxes.forEach(cb => {
                     registrosAlumnos.push({
-                        alumno_id: String(cb.getAttribute('data-alumno-id')),
+                        alumno_id: parseInt(cb.getAttribute('data-alumno-id'), 10),
                         fecha: fecha,
                         presente: cb.checked
                     });
@@ -1921,7 +1991,7 @@
                 const registrosMaestros = [];
                 teacherCheckboxes.forEach(cb => {
                     registrosMaestros.push({
-                        maestro_id: String(cb.getAttribute('data-maestro-id')),
+                        maestro_id: cb.getAttribute('data-maestro-id'),
                         fecha: fecha,
                         presente: cb.checked
                     });
@@ -1997,7 +2067,7 @@
             const fileName = `${carpeta}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
             const { data, error } = await supabaseClient.storage
-                .from('documentos_alumnos')
+                .from(CONFIG.STORAGE_BUCKET)
                 .upload(fileName, file);
 
             if (error) {
@@ -2005,11 +2075,7 @@
                 return null;
             }
 
-            const { data: publicUrlData } = supabaseClient.storage
-                .from('documentos_alumnos')
-                .getPublicUrl(fileName);
-
-            return publicUrlData.publicUrl;
+            return fileName;
         }
 
         function renderDashboard() {
@@ -2090,9 +2156,6 @@
 
             filtered.forEach(s => {
                 const safeFoto = sanitizeUrl(s.foto_url);
-                const safeDui = sanitizeUrl(s.dui_url);
-                const safePartida = sanitizeUrl(s.partida_url);
-                const safeCert = sanitizeUrl(s.certificado_url);
                 const safeId = escapeAttr(s.id);
                 const inicial = escapeHtml(s.nombres ? s.nombres[0] : 'A');
                 const edadTexto = s.edad ? `${escapeHtml(s.edad)} años` : 'Edad S/D';
@@ -2103,10 +2166,10 @@
 
                 const docsIcons = `
                     <div class="flex justify-center space-x-2 text-sm">
-                        ${safeDui ? `<a href="${safeDui}" target="_blank" rel="noopener noreferrer" title="DUI" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"><i class="fa-solid fa-id-card"></i></a>` : ''}
-                        ${safePartida ? `<a href="${safePartida}" target="_blank" rel="noopener noreferrer" title="Partida" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800"><i class="fa-solid fa-file-contract"></i></a>` : ''}
-                        ${safeCert ? `<a href="${safeCert}" target="_blank" rel="noopener noreferrer" title="Certificado" class="text-amber-600 dark:text-amber-400 hover:text-amber-800"><i class="fa-solid fa-award"></i></a>` : ''}
-                        ${!safeDui && !safePartida && !safeCert ? `<span class="text-xs text-slate-300 dark:text-slate-600">-</span>` : ''}
+                        ${s.dui_url ? `<button type="button" onclick="openProtectedFile('${escapeAttr(s.dui_url)}')" title="DUI" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"><i class="fa-solid fa-id-card"></i></button>` : ''}
+                        ${s.partida_url ? `<button type="button" onclick="openProtectedFile('${escapeAttr(s.partida_url)}')" title="Partida" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800"><i class="fa-solid fa-file-contract"></i></button>` : ''}
+                        ${s.certificado_url ? `<button type="button" onclick="openProtectedFile('${escapeAttr(s.certificado_url)}')" title="Certificado" class="text-amber-600 dark:text-amber-400 hover:text-amber-800"><i class="fa-solid fa-award"></i></button>` : ''}
+                        ${!s.dui_url && !s.partida_url && !s.certificado_url ? `<span class="text-xs text-slate-300 dark:text-slate-600">-</span>` : ''}
                     </div>
                 `;
 
@@ -2158,7 +2221,7 @@
             document.getElementById('student-modal').classList.remove('hidden');
         }
 
-        function editStudent(id) {
+        async function editStudent(id) {
             const student = state.students.find(s => s.id === id);
             if (!student) return;
 
@@ -2183,8 +2246,9 @@
 
             document.getElementById('student-foto').value = '';
 
-            if (student.foto_url) {
-                document.getElementById('preview-foto').src = student.foto_url;
+            const fotoResuelta = await resolveFileUrl(student.foto_url);
+            if (fotoResuelta) {
+                document.getElementById('preview-foto').src = fotoResuelta;
                 document.getElementById('preview-foto').classList.remove('hidden');
                 document.getElementById('icon-foto-default').classList.add('hidden');
             } else {
@@ -2286,7 +2350,6 @@
 
             filtered.forEach(m => {
                 const safeFoto = sanitizeUrl(m.foto_url);
-                const safeDuiAdjunto = sanitizeUrl(m.dui_adjunto_url);
                 const safeId = escapeAttr(m.id);
                 const inicial = escapeHtml(m.nombre ? m.nombre[0] : 'M');
 
@@ -2317,7 +2380,7 @@
                             <span class="px-2.5 py-1 ${rolColor} rounded-lg text-xs font-semibold">${escapeHtml(m.rol_nivel || 'Colaborador')}</span>
                         </td>
                         <td class="py-3 px-4 text-center">
-                            ${safeDuiAdjunto ? `<a href="${safeDuiAdjunto}" target="_blank" rel="noopener noreferrer" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>Ver DUI</a>` : '<span class="text-slate-300 dark:text-slate-600 text-xs">-</span>'}
+                            ${m.dui_adjunto_url ? `<button type="button" onclick="openProtectedFile('${escapeAttr(m.dui_adjunto_url)}')" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>Ver DUI</button>` : '<span class="text-slate-300 dark:text-slate-600 text-xs">-</span>'}
                         </td>
                         <td class="py-3 px-4 text-right space-x-1">
                             <button onclick="editTeacher('${safeId}')" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -2348,7 +2411,7 @@
             document.getElementById('teacher-modal').classList.remove('hidden');
         }
 
-        function editTeacher(id) {
+        async function editTeacher(id) {
             const m = state.teachers.find(item => item.id == id);
             if (!m) return;
 
@@ -2366,8 +2429,9 @@
             document.getElementById('teacher-password').value = '';
             document.getElementById('teacher-password-confirm').value = '';
 
-            if (m.foto_url) {
-                document.getElementById('preview-teacher-foto').src = m.foto_url;
+            const fotoResuelta = await resolveFileUrl(m.foto_url);
+            if (fotoResuelta) {
+                document.getElementById('preview-teacher-foto').src = fotoResuelta;
                 document.getElementById('preview-teacher-foto').classList.remove('hidden');
                 document.getElementById('icon-teacher-foto-default').classList.add('hidden');
             } else {
@@ -2512,9 +2576,6 @@
 
             conDocumentos.forEach(s => {
                 const safeFoto = sanitizeUrl(s.foto_url);
-                const safeDui = sanitizeUrl(s.dui_url);
-                const safePartida = sanitizeUrl(s.partida_url);
-                const safeCert = sanitizeUrl(s.certificado_url);
                 const inicial = escapeHtml(s.nombres ? s.nombres[0] : 'A');
 
                 grid.innerHTML += `
@@ -2529,9 +2590,9 @@
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400 mb-3"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${escapeHtml(s.direccion || 'Sin dirección registrada')}</p>
                             <div class="space-y-2 text-xs border-t border-slate-100 dark:border-slate-700 pt-3">
-                                ${safeDui ? `<a href="${safeDui}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-id-card text-indigo-600 dark:text-indigo-400 mr-2"></i>DUI / Cédula</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
-                                ${safePartida ? `<a href="${safePartida}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-file-contract text-emerald-600 dark:text-emerald-400 mr-2"></i>Partida Nacimiento</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
-                                ${safeCert ? `<a href="${safeCert}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-award text-amber-600 dark:text-amber-400 mr-2"></i>Certificados</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></a>` : ''}
+                                ${s.dui_url ? `<button type="button" onclick="openProtectedFile('${escapeAttr(s.dui_url)}')" class="w-full flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-id-card text-indigo-600 dark:text-indigo-400 mr-2"></i>DUI / Cédula</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></button>` : ''}
+                                ${s.partida_url ? `<button type="button" onclick="openProtectedFile('${escapeAttr(s.partida_url)}')" class="w-full flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-file-contract text-emerald-600 dark:text-emerald-400 mr-2"></i>Partida Nacimiento</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></button>` : ''}
+                                ${s.certificado_url ? `<button type="button" onclick="openProtectedFile('${escapeAttr(s.certificado_url)}')" class="w-full flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-brand-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300"><span class="font-medium"><i class="fa-solid fa-award text-amber-600 dark:text-amber-400 mr-2"></i>Certificados</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i></button>` : ''}
                             </div>
                         </div>
                     </div>
