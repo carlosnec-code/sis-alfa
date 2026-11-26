@@ -162,6 +162,10 @@
                     <i class="fa-solid fa-folder-open"></i>
                     <span>Documentos</span>
                 </button>
+                <button onclick="switchTab('resources')" id="nav-resources" class="tab-btn flex-1 min-w-[110px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <i class="fa-solid fa-book-atlas"></i>
+                    <span>Recursos</span>
+                </button>
             </div>
 
             <!-- TAB 1: DASHBOARD -->
@@ -723,6 +727,51 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="documents-grid">
                 </div>
             </div>
+
+            <!-- TAB: RECURSOS PARA MAESTROS -->
+            <div id="tab-resources" class="tab-content hidden flex-1 flex flex-col space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+                    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 flex-1">
+                        <div class="relative w-full sm:w-64">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                <i class="fa-solid fa-search"></i>
+                            </span>
+                            <input type="text" id="resource-search" oninput="renderResourcesGrid()" placeholder="Buscar recurso o tema..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+
+                        <div>
+                            <select id="resource-level-filter" onchange="renderResourcesGrid()" class="w-full sm:w-auto bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 dark:disabled:bg-slate-800">
+                                <option value="">Todos los niveles</option>
+                                <option value="General (Todos los niveles)">General (Todos los niveles)</option>
+                                <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
+                                <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
+                                <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
+                                <option value="Avanzado (Nivel 3)">Avanzado (Nivel 3)</option>
+                                <option value="Tercer Ciclo (Nivel 4)">Tercer Ciclo (Nivel 4)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select id="resource-type-filter" onchange="renderResourcesGrid()" class="w-full sm:w-auto bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="">Todos los tipos</option>
+                                <option value="Información de nivel">Información de nivel</option>
+                                <option value="Guía / Material">Guía / Material</option>
+                                <option value="Enlace útil">Enlace útil</option>
+                                <option value="Plantilla / Actividad">Plantilla / Actividad</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="openResourceModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center space-x-2 shrink-0">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nuevo Recurso</span>
+                    </button>
+                </div>
+
+                <div id="resources-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="col-span-full py-10 text-center text-slate-400 text-sm">Cargando recursos...</div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -1006,6 +1055,73 @@
         </div>
     </div>
 
+    <!-- MODAL: CREAR / EDITAR RECURSO PARA MAESTROS -->
+    <div id="resource-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" id="resource-modal-title">Nuevo Recurso para Maestros</h3>
+                <button onclick="closeModal('resource-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="resource-form" onsubmit="handleResourceSubmit(event)" class="space-y-4">
+                <input type="hidden" id="resource-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Título del Recurso *</label>
+                    <input type="text" id="resource-titulo" required placeholder="Ej. Lineamientos de evaluación Nivel 1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nivel *</label>
+                        <select id="resource-nivel" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="General (Todos los niveles)">General (Todos los niveles)</option>
+                            <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
+                            <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
+                            <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
+                            <option value="Avanzado (Nivel 3)">Avanzado (Nivel 3)</option>
+                            <option value="Tercer Ciclo (Nivel 4)">Tercer Ciclo (Nivel 4)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tipo *</label>
+                        <select id="resource-tipo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Información de nivel">Información de nivel</option>
+                            <option value="Guía / Material">Guía / Material</option>
+                            <option value="Enlace útil">Enlace útil</option>
+                            <option value="Plantilla / Actividad">Plantilla / Actividad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Descripción / Información</label>
+                    <textarea id="resource-descripcion" rows="3" placeholder="Detalles, indicaciones para los maestros o resumen del nivel..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Enlace Externo (opcional)</label>
+                    <input type="url" id="resource-enlace" placeholder="https://..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Archivo Adjunto (PDF, Imagen, Word, etc.)</label>
+                    <input type="file" id="resource-archivo" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 dark:file:bg-emerald-950 file:text-brand-700 dark:file:text-brand-400">
+                    <p id="resource-archivo-actual" class="text-[11px] text-slate-400 mt-1 hidden"></p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('resource-modal')" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-medium py-2 px-4 rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" id="btn-submit-resource" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-5 rounded-xl text-xs shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Guardar Recurso</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
@@ -1036,6 +1152,7 @@
         let state = {
             students: [],
             teachers: [],
+            resources: [],
             countAsistencias: 0,
             modulesList: [...DEFAULT_MODULES],
             modulesByLevel: {},
@@ -1674,6 +1791,7 @@
             if (tabId === 'students') renderStudentsTable();
             if (tabId === 'teachers') renderTeachersTable();
             if (tabId === 'documents') renderDocumentsGrid();
+            if (tabId === 'resources') cargarRecursosMaestros();
         }
 
         function showToast(message, type = 'success') {
@@ -3583,6 +3701,280 @@
             if (!textarea) return;
             await guardarObservacionAlumno(studentId, textarea.value);
         }
+
+        // -------------------------------------------------------------
+        // MÓDULO DE RECURSOS PARA MAESTROS (public.recursos_maestros)
+        // -------------------------------------------------------------
+        function puedeGestionarRecurso(recurso) {
+            if (!recurso) return false;
+            if (state.currentUser.rol === 'Administrador') return true;
+            const userEmail = (state.currentUser.email || '').toLowerCase();
+            return Boolean(userEmail && recurso.autor_email && recurso.autor_email.toLowerCase() === userEmail);
+        }
+
+        function getNombreAutorActual() {
+            const email = (state.currentUser.email || '').toLowerCase();
+            const maestro = state.teachers.find(m => (m.email || '').toLowerCase() === email);
+            return (maestro && maestro.nombre) ? maestro.nombre : (state.currentUser.email || 'Maestro');
+        }
+
+        async function cargarRecursosMaestros() {
+            const { data, error } = await supabaseClient
+                .from('recursos_maestros')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                showToast('Error al cargar recursos: ' + error.message, 'error');
+                return;
+            }
+
+            state.resources = data || [];
+            renderResourcesGrid();
+        }
+
+        function renderResourcesGrid() {
+            const grid = document.getElementById('resources-grid');
+            if (!grid) return;
+
+            const search = (document.getElementById('resource-search')?.value || '').trim().toLowerCase();
+            const levelFilterEl = document.getElementById('resource-level-filter');
+            const typeFilter = document.getElementById('resource-type-filter')?.value || '';
+
+            const rol = state.currentUser.rol;
+            const userNivel = state.currentUser.nivelAsignado;
+
+            let nivelFiltro = levelFilterEl ? levelFilterEl.value : '';
+            if (rol !== 'Administrador' && userNivel && levelFilterEl) {
+                if (!levelFilterEl.dataset.initializedForRole) {
+                    levelFilterEl.value = userNivel;
+                    levelFilterEl.dataset.initializedForRole = '1';
+                    nivelFiltro = userNivel;
+                }
+            }
+
+            const filtrados = (state.resources || []).filter(r => {
+                if (rol !== 'Administrador' && userNivel) {
+                    const coincideNivelUsuario = (r.nivel === userNivel || r.nivel === 'General (Todos los niveles)');
+                    if (!coincideNivelUsuario) return false;
+                }
+
+                const matchNivel = !nivelFiltro || r.nivel === nivelFiltro;
+                const matchTipo = !typeFilter || r.tipo === typeFilter;
+                const matchSearch = !search ||
+                    (r.titulo && r.titulo.toLowerCase().includes(search)) ||
+                    (r.descripcion && r.descripcion.toLowerCase().includes(search)) ||
+                    (r.autor_nombre && r.autor_nombre.toLowerCase().includes(search));
+
+                return matchNivel && matchTipo && matchSearch;
+            });
+
+            if (filtrados.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 text-sm">No hay recursos registrados con los filtros actuales.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtrados.map(r => {
+                const safeId = escapeAttr(r.id);
+                const safeLink = sanitizeUrl(r.enlace_externo);
+                const fechaFmt = r.created_at ? new Date(r.created_at).toLocaleDateString('es-ES') : '';
+                const editable = puedeGestionarRecurso(r);
+
+                const archivoBtn = r.archivo_path
+                    ? `<button type="button" onclick="openProtectedFile('${escapeAttr(r.archivo_path)}')" class="w-full flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900 hover:bg-brand-50 dark:hover:bg-emerald-950 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors">
+                           <span class="truncate pr-2"><i class="fa-solid fa-paperclip text-brand-600 dark:text-brand-400 mr-2"></i>${escapeHtml(r.archivo_nombre || 'Archivo adjunto')}</span>
+                           <i class="fa-solid fa-arrow-up-right-from-square text-slate-400 shrink-0"></i>
+                       </button>`
+                    : '';
+
+                const linkBtn = safeLink
+                    ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-between p-2.5 bg-indigo-50/70 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl border border-indigo-200/70 dark:border-indigo-800/70 text-xs font-semibold text-indigo-700 dark:text-indigo-300 transition-colors">
+                           <span class="truncate pr-2"><i class="fa-solid fa-link mr-2"></i>Abrir enlace externo</span>
+                           <i class="fa-solid fa-arrow-up-right-from-square text-xs shrink-0"></i>
+                       </a>`
+                    : '';
+
+                const accionesHtml = editable
+                    ? `<div class="flex items-center space-x-1">
+                           <button type="button" onclick="openResourceModal('${safeId}')" title="Editar recurso" class="text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+                           <button type="button" onclick="deleteResource('${safeId}')" title="Eliminar recurso" class="text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg transition-colors"><i class="fa-solid fa-trash"></i></button>
+                       </div>`
+                    : '';
+
+                return `
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between space-y-4">
+                        <div class="space-y-2.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-brand-50 dark:bg-emerald-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-emerald-800">${escapeHtml(r.nivel || 'General (Todos los niveles)')}</span>
+                                    <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${escapeHtml(r.tipo || 'Información de nivel')}</span>
+                                </div>
+                                ${accionesHtml}
+                            </div>
+
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm leading-snug">${escapeHtml(r.titulo)}</h4>
+
+                            ${r.descripcion ? `<p class="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line">${escapeHtml(r.descripcion)}</p>` : ''}
+
+                            <div class="space-y-2 pt-1">
+                                ${archivoBtn}
+                                ${linkBtn}
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-400">
+                            <span><i class="fa-solid fa-user-pen mr-1"></i>${escapeHtml(r.autor_nombre || r.autor_email || 'Docente')}</span>
+                            <span>${escapeHtml(fechaFmt)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openResourceModal(resourceId = null) {
+            document.getElementById('resource-form').reset();
+            document.getElementById('resource-id').value = '';
+            const actualEl = document.getElementById('resource-archivo-actual');
+            actualEl.classList.add('hidden');
+            actualEl.textContent = '';
+
+            const nivelSelect = document.getElementById('resource-nivel');
+            if (state.currentUser.rol !== 'Administrador' && state.currentUser.nivelAsignado) {
+                nivelSelect.value = state.currentUser.nivelAsignado;
+            } else {
+                nivelSelect.value = 'General (Todos los niveles)';
+            }
+
+            if (resourceId) {
+                const rec = state.resources.find(item => String(item.id) === String(resourceId));
+                if (!rec) return;
+                if (!puedeGestionarRecurso(rec)) {
+                    showToast('No tienes permisos para editar este recurso', 'error');
+                    return;
+                }
+                document.getElementById('resource-modal-title').textContent = 'Editar Recurso';
+                document.getElementById('resource-id').value = rec.id;
+                document.getElementById('resource-titulo').value = rec.titulo || '';
+                nivelSelect.value = rec.nivel || 'General (Todos los niveles)';
+                document.getElementById('resource-tipo').value = rec.tipo || 'Información de nivel';
+                document.getElementById('resource-descripcion').value = rec.descripcion || '';
+                document.getElementById('resource-enlace').value = rec.enlace_externo || '';
+
+                if (rec.archivo_nombre || rec.archivo_path) {
+                    actualEl.textContent = `Archivo actual: ${rec.archivo_nombre || rec.archivo_path} (sube otro solo si deseas reemplazarlo)`;
+                    actualEl.classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('resource-modal-title').textContent = 'Nuevo Recurso para Maestros';
+            }
+
+            document.getElementById('resource-modal').classList.remove('hidden');
+        }
+
+        async function handleResourceSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-resource');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+            try {
+                const idVal = document.getElementById('resource-id').value;
+                const existente = idVal ? state.resources.find(item => String(item.id) === String(idVal)) : null;
+
+                if (existente && !puedeGestionarRecurso(existente)) {
+                    showToast('No tienes permisos para modificar este recurso', 'error');
+                    return;
+                }
+
+                const enlaceRaw = document.getElementById('resource-enlace').value.trim();
+                let enlaceLimpio = null;
+                if (enlaceRaw) {
+                    const validado = sanitizeUrl(enlaceRaw);
+                    if (!validado) {
+                        showToast('El enlace externo debe comenzar con https://', 'error');
+                        return;
+                    }
+                    enlaceLimpio = enlaceRaw;
+                }
+
+                const fileInput = document.getElementById('resource-archivo');
+                const archivoSeleccionado = fileInput.files[0] || null;
+                let archivoPath = existente ? existente.archivo_path : null;
+                let archivoNombre = existente ? existente.archivo_nombre : null;
+
+                if (archivoSeleccionado) {
+                    const subidoPath = await subirArchivoSupabase(fileInput, 'recursos_maestros');
+                    if (!subidoPath) {
+                        showToast('No se pudo subir el archivo adjunto', 'error');
+                        return;
+                    }
+                    archivoPath = subidoPath;
+                    archivoNombre = archivoSeleccionado.name;
+                }
+
+                const payload = {
+                    titulo: document.getElementById('resource-titulo').value.trim(),
+                    nivel: document.getElementById('resource-nivel').value,
+                    tipo: document.getElementById('resource-tipo').value,
+                    descripcion: document.getElementById('resource-descripcion').value.trim() || null,
+                    enlace_externo: enlaceLimpio,
+                    archivo_path: archivoPath,
+                    archivo_nombre: archivoNombre
+                };
+
+                let error;
+                if (idVal) {
+                    const res = await supabaseClient
+                        .from('recursos_maestros')
+                        .update(payload)
+                        .eq('id', idVal);
+                    error = res.error;
+                } else {
+                    payload.autor_nombre = getNombreAutorActual();
+                    payload.autor_email = state.currentUser.email || null;
+                    const res = await supabaseClient
+                        .from('recursos_maestros')
+                        .insert([payload]);
+                    error = res.error;
+                }
+
+                if (error) {
+                    showToast('Error al guardar recurso: ' + error.message, 'error');
+                    return;
+                }
+
+                showToast(idVal ? 'Recurso actualizado' : 'Recurso publicado');
+                closeModal('resource-modal');
+                await cargarRecursosMaestros();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Guardar Recurso</span>`;
+            }
+        }
+
+        async function deleteResource(id) {
+            const rec = state.resources.find(item => String(item.id) === String(id));
+            if (!rec || !puedeGestionarRecurso(rec)) {
+                showToast('No tienes permisos para eliminar este recurso', 'error');
+                return;
+            }
+
+            if (!confirm(`¿Deseas eliminar el recurso "${rec.titulo}"?`)) return;
+
+            const { error } = await supabaseClient
+                .from('recursos_maestros')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                showToast('Error al eliminar recurso: ' + error.message, 'error');
+                return;
+            }
+
+            showToast('Recurso eliminado');
+            await cargarRecursosMaestros();
+        }
+
     </script>
 </body>
 </html>
