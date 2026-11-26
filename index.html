@@ -412,7 +412,7 @@
                     <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nivel Académico:</label>
-                            <select id="report-level-select" onchange="generarInformes()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-500">
+                            <select id="report-level-select" onchange="poblarSelectModulosInforme(); generarInformes();" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-500">
                                 <option value="Inicial (Nivel 0)">Inicial (Nivel 0)</option>
                                 <option value="Principiante (Nivel 1)">Principiante (Nivel 1)</option>
                                 <option value="Intermedio (Nivel 2)">Intermedio (Nivel 2)</option>
@@ -899,20 +899,31 @@
             SUPABASE_URL: "https://cegulltqwhgovouncvfc.supabase.co",
             SUPABASE_KEY: "sb_publishable_H5f5I2xa7o--Mun2VOvtAw_ziWidTDB",
             STORAGE_BUCKET: "documentos_alumnos",
-            STORAGE_CATALOG_KEY: "alfabetizacion_catalogo_notas_v1"
+            STORAGE_CATALOG_KEY: "alfabetizacion_catalogo_notas_v2"
         };
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
 
+        const ALL_LEVELS = [
+            "Inicial (Nivel 0)",
+            "Principiante (Nivel 1)",
+            "Intermedio (Nivel 2)",
+            "Avanzado (Nivel 3)",
+            "Tercer Ciclo (Nivel 4)"
+        ];
+
         const DEFAULT_MODULES = ["Lectoescritura", "Matemáticas Básicas", "Ciencias y Entorno"];
         const DEFAULT_EVALUATIONS = ["Tarea 1", "Tarea 2", "Examen Parcial"];
+        const ALL_MODULES_OPTION = "__TODAS__";
 
         let state = { 
             students: [], 
             teachers: [], 
             countAsistencias: 0, 
             modulesList: [...DEFAULT_MODULES],
-            // Mapa independiente por "Nivel|||Modulo": { "Tercer Ciclo (Nivel 4)|||Ciencias y Entorno": ["Tarea 1", ...] }
+            // Módulos propios por nivel: { "Tercer Ciclo (Nivel 4)": ["Matematicas", ...] }
+            modulesByLevel: {},
+            // Evaluaciones por "Nivel|||Modulo": { "Tercer Ciclo (Nivel 4)|||Matematicas": ["FRANCIONES", ...] }
             evaluationsByContext: {},
             currentUser: {
                 email: "",
@@ -923,6 +934,24 @@
 
         function getContextKey(nivel, modulo) {
             return `${nivel || "General"}|||${modulo || "General"}`;
+        }
+
+        function getModulesForLevel(nivel) {
+            const key = nivel || "Inicial (Nivel 0)";
+            if (!Array.isArray(state.modulesByLevel[key])) {
+                state.modulesByLevel[key] = [...state.modulesList];
+            }
+            return state.modulesByLevel[key];
+        }
+
+        function setModulesForLevel(nivel, list) {
+            const key = nivel || "Inicial (Nivel 0)";
+            const clean = Array.from(new Set(list.filter(Boolean)));
+            state.modulesByLevel[key] = clean.length > 0 ? clean : ["General"];
+            clean.forEach(m => {
+                if (!state.modulesList.includes(m)) state.modulesList.push(m);
+            });
+            guardarCatalogoLocal();
         }
 
         function getEvaluationsForContext(nivel, modulo) {
@@ -943,6 +972,7 @@
             try {
                 localStorage.setItem(CONFIG.STORAGE_CATALOG_KEY, JSON.stringify({
                     modulesList: state.modulesList,
+                    modulesByLevel: state.modulesByLevel,
                     evaluationsByContext: state.evaluationsByContext
                 }));
             } catch (e) {
@@ -957,6 +987,9 @@
                 const parsed = JSON.parse(raw);
                 if (Array.isArray(parsed.modulesList) && parsed.modulesList.length > 0) {
                     state.modulesList = parsed.modulesList;
+                }
+                if (parsed.modulesByLevel && typeof parsed.modulesByLevel === "object") {
+                    state.modulesByLevel = parsed.modulesByLevel;
                 }
                 if (parsed.evaluationsByContext && typeof parsed.evaluationsByContext === "object") {
                     state.evaluationsByContext = parsed.evaluationsByContext;
@@ -1073,6 +1106,7 @@
             validarFechaLunesMartes();
 
             poblarSelectModulos();
+            poblarSelectModulosInforme();
 
             const { data: { session } } = await supabaseClient.auth.getSession();
             gestionarEstadoSesion(session);
@@ -1223,24 +1257,31 @@
                     .from('calificaciones')
                     .select('alumno_id, modulo, evaluacion');
                 if (!error && data && data.length > 0) {
-                    const modSet = new Set(state.modulesList);
                     const alumnoNivelMap = new Map(state.students.map(s => [s.id, s.nivel]));
 
                     data.forEach(row => {
-                        if (row.modulo) modSet.add(row.modulo);
-                        if (row.modulo && row.evaluacion) {
-                            const nivelAlumno = alumnoNivelMap.get(row.alumno_id);
-                            if (nivelAlumno) {
-                                const list = getEvaluationsForContext(nivelAlumno, row.modulo);
-                                if (!list.includes(row.evaluacion)) {
-                                    list.push(row.evaluacion);
+                        if (!row.modulo) return;
+                        if (!state.modulesList.includes(row.modulo)) {
+                            state.modulesList.push(row.modulo);
+                        }
+                        const nivelAlumno = alumnoNivelMap.get(row.alumno_id);
+                        if (nivelAlumno) {
+                            const modList = getModulesForLevel(nivelAlumno);
+                            if (!modList.includes(row.modulo)) {
+                                modList.push(row.modulo);
+                                state.modulesByLevel[nivelAlumno] = modList;
+                            }
+                            if (row.evaluacion) {
+                                const evalList = getEvaluationsForContext(nivelAlumno, row.modulo);
+                                if (!evalList.includes(row.evaluacion)) {
+                                    evalList.push(row.evaluacion);
                                 }
                             }
                         }
                     });
-                    state.modulesList = Array.from(modSet);
                     guardarCatalogoLocal();
                     poblarSelectModulos();
+                    poblarSelectModulosInforme();
                 }
             } catch (e) {
                 console.warn("No se pudo sincronizar catálogo desde calificaciones:", e);
@@ -1309,8 +1350,14 @@
 
             if (tabId === 'dashboard') renderDashboard();
             if (tabId === 'level-tracker') cargarSeguimientoNivel();
-            if (tabId === 'grades') cargarMatrizNotas();
-            if (tabId === 'reports') generarInformes();
+            if (tabId === 'grades') {
+                poblarSelectModulos();
+                cargarMatrizNotas();
+            }
+            if (tabId === 'reports') {
+                poblarSelectModulosInforme();
+                generarInformes();
+            }
             if (tabId === 'students') renderStudentsTable();
             if (tabId === 'teachers') renderTeachersTable();
             if (tabId === 'documents') renderDocumentsGrid();
@@ -1362,19 +1409,44 @@
         // -------------------------------------------------------------
         
         function poblarSelectModulos() {
-            const selects = [
-                document.getElementById('grades-module-select'),
-                document.getElementById('report-module-select')
-            ];
-            
-            selects.forEach(select => {
-                if (!select) return;
-                const currentVal = select.value;
-                select.innerHTML = state.modulesList.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`).join('');
-                if (currentVal && state.modulesList.includes(currentVal)) {
-                    select.value = currentVal;
-                }
-            });
+            const levelSelect = document.getElementById('grades-level-select');
+            const modSelect = document.getElementById('grades-module-select');
+            if (!modSelect) return;
+
+            const nivel = levelSelect ? levelSelect.value : "Inicial (Nivel 0)";
+            const levelModules = getModulesForLevel(nivel);
+            const currentVal = modSelect.value;
+
+            modSelect.innerHTML = levelModules
+                .map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`)
+                .join('');
+
+            if (currentVal && levelModules.includes(currentVal)) {
+                modSelect.value = currentVal;
+            }
+        }
+
+        function poblarSelectModulosInforme() {
+            const levelSelect = document.getElementById('report-level-select');
+            const repModSelect = document.getElementById('report-module-select');
+            if (!repModSelect) return;
+
+            const nivel = levelSelect ? levelSelect.value : "Inicial (Nivel 0)";
+            const levelModules = getModulesForLevel(nivel);
+            const currentVal = repModSelect.value;
+
+            const optionsHtml = [
+                `<option value="${ALL_MODULES_OPTION}">Todas</option>`,
+                ...levelModules.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`)
+            ].join('');
+
+            repModSelect.innerHTML = optionsHtml;
+
+            if (currentVal === ALL_MODULES_OPTION || (currentVal && levelModules.includes(currentVal))) {
+                repModSelect.value = currentVal;
+            } else {
+                repModSelect.value = ALL_MODULES_OPTION;
+            }
         }
 
         function crearNuevoModulo() {
@@ -1382,18 +1454,21 @@
                 showToast('No tienes permisos para crear módulos', 'error');
                 return;
             }
-            const nuevoModulo = prompt("Ingresa el nombre del nuevo Módulo / Asignatura:");
+            const nivel = document.getElementById('grades-level-select').value;
+            const nuevoModulo = prompt(`Ingresa el nombre del nuevo Módulo / Asignatura para ${nivel}:`);
             if (nuevoModulo && nuevoModulo.trim() !== "") {
                 const nombreLimpio = nuevoModulo.trim();
-                if (!state.modulesList.includes(nombreLimpio)) {
-                    state.modulesList.push(nombreLimpio);
-                    guardarCatalogoLocal();
+                const levelModules = getModulesForLevel(nivel);
+                if (!levelModules.includes(nombreLimpio)) {
+                    levelModules.push(nombreLimpio);
+                    setModulesForLevel(nivel, levelModules);
                     poblarSelectModulos();
+                    poblarSelectModulosInforme();
                     document.getElementById('grades-module-select').value = nombreLimpio;
                     cargarMatrizNotas();
-                    showToast(`Módulo "${nombreLimpio}" creado`);
+                    showToast(`Módulo "${nombreLimpio}" creado en ${nivel}`);
                 } else {
-                    showToast("Ese módulo ya existe", "error");
+                    showToast("Ese módulo ya existe en este nivel", "error");
                 }
             }
         }
@@ -1403,41 +1478,53 @@
                 showToast('No tienes permisos para editar módulos', 'error');
                 return;
             }
+            const nivel = document.getElementById('grades-level-select').value;
             const select = document.getElementById('grades-module-select');
             const moduloActual = select.value;
             if (!moduloActual) return;
 
-            const nuevoNombre = prompt("Nuevo nombre para el módulo:", moduloActual);
+            const nuevoNombre = prompt(`Nuevo nombre para el módulo en ${nivel}:`, moduloActual);
             if (nuevoNombre && nuevoNombre.trim() !== "" && nuevoNombre !== moduloActual) {
                 const nombreLimpio = nuevoNombre.trim();
+                const idsAlumnosNivel = state.students.filter(s => s.nivel === nivel).map(s => s.id);
 
-                const { error } = await supabaseClient
-                    .from('calificaciones')
-                    .update({ modulo: nombreLimpio })
-                    .eq('modulo', moduloActual);
+                if (idsAlumnosNivel.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('calificaciones')
+                        .update({ modulo: nombreLimpio })
+                        .eq('modulo', moduloActual)
+                        .in('alumno_id', idsAlumnosNivel);
 
-                if (error) {
-                    showToast('Error al actualizar módulo en Supabase: ' + error.message, 'error');
-                } else {
-                    const idx = state.modulesList.indexOf(moduloActual);
-                    if (idx !== -1) state.modulesList[idx] = nombreLimpio;
-
-                    // Migrar evaluaciones guardadas por contexto para este módulo
-                    Object.keys(state.evaluationsByContext).forEach(key => {
-                        const parts = key.split("|||");
-                        if (parts[1] === moduloActual) {
-                            const newKey = getContextKey(parts[0], nombreLimpio);
-                            state.evaluationsByContext[newKey] = state.evaluationsByContext[key];
-                            delete state.evaluationsByContext[key];
-                        }
-                    });
-
-                    guardarCatalogoLocal();
-                    poblarSelectModulos();
-                    select.value = nombreLimpio;
-                    cargarMatrizNotas();
-                    showToast('Nombre de módulo actualizado');
+                    if (error) {
+                        showToast('Error al actualizar módulo en Supabase: ' + error.message, 'error');
+                        return;
+                    }
                 }
+
+                const levelModules = getModulesForLevel(nivel);
+                const idx = levelModules.indexOf(moduloActual);
+                if (idx !== -1) {
+                    if (levelModules.includes(nombreLimpio)) {
+                        levelModules.splice(idx, 1);
+                    } else {
+                        levelModules[idx] = nombreLimpio;
+                    }
+                }
+                setModulesForLevel(nivel, levelModules);
+
+                const oldKey = getContextKey(nivel, moduloActual);
+                if (state.evaluationsByContext[oldKey]) {
+                    const newKey = getContextKey(nivel, nombreLimpio);
+                    state.evaluationsByContext[newKey] = state.evaluationsByContext[oldKey];
+                    delete state.evaluationsByContext[oldKey];
+                    guardarCatalogoLocal();
+                }
+
+                poblarSelectModulos();
+                poblarSelectModulosInforme();
+                select.value = nombreLimpio;
+                cargarMatrizNotas();
+                showToast('Nombre de módulo actualizado');
             }
         }
 
@@ -1446,36 +1533,40 @@
                 showToast('No tienes permisos para eliminar módulos', 'error');
                 return;
             }
+            const nivel = document.getElementById('grades-level-select').value;
             const select = document.getElementById('grades-module-select');
             const moduloActual = select.value;
             if (!moduloActual) return;
 
-            if (confirm(`¿Seguro que deseas eliminar el módulo "${moduloActual}"? Se borrarán sus calificaciones en Supabase.`)) {
-                const { error } = await supabaseClient
-                    .from('calificaciones')
-                    .delete()
-                    .eq('modulo', moduloActual);
+            if (confirm(`¿Seguro que deseas eliminar el módulo "${moduloActual}" de ${nivel}? Se borrarán sus calificaciones en Supabase.`)) {
+                const idsAlumnosNivel = state.students.filter(s => s.nivel === nivel).map(s => s.id);
 
-                if (!error) {
-                    state.modulesList = state.modulesList.filter(m => m !== moduloActual);
-                    if (state.modulesList.length === 0) {
-                        state.modulesList = ["General"];
+                if (idsAlumnosNivel.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('calificaciones')
+                        .delete()
+                        .eq('modulo', moduloActual)
+                        .in('alumno_id', idsAlumnosNivel);
+
+                    if (error) {
+                        showToast('Error al eliminar módulo: ' + error.message, 'error');
+                        return;
                     }
-
-                    Object.keys(state.evaluationsByContext).forEach(key => {
-                        const parts = key.split("|||");
-                        if (parts[1] === moduloActual) {
-                            delete state.evaluationsByContext[key];
-                        }
-                    });
-
-                    guardarCatalogoLocal();
-                    poblarSelectModulos();
-                    cargarMatrizNotas();
-                    showToast(`Módulo "${moduloActual}" eliminado`);
-                } else {
-                    showToast('Error al eliminar módulo: ' + error.message, 'error');
                 }
+
+                const remaining = getModulesForLevel(nivel).filter(m => m !== moduloActual);
+                setModulesForLevel(nivel, remaining);
+
+                const ctxKey = getContextKey(nivel, moduloActual);
+                if (state.evaluationsByContext[ctxKey]) {
+                    delete state.evaluationsByContext[ctxKey];
+                    guardarCatalogoLocal();
+                }
+
+                poblarSelectModulos();
+                poblarSelectModulosInforme();
+                cargarMatrizNotas();
+                showToast(`Módulo "${moduloActual}" eliminado de ${nivel}`);
             }
         }
 
@@ -1553,6 +1644,7 @@
         }
 
         async function cargarMatrizNotas() {
+            poblarSelectModulos();
             const nivel = document.getElementById('grades-level-select').value;
             const modulo = document.getElementById('grades-module-select').value;
 
@@ -1560,7 +1652,7 @@
             const idsAlumnosNivel = alumnosNivel.map(s => s.id);
 
             let notasDB = [];
-            if (idsAlumnosNivel.length > 0) {
+            if (idsAlumnosNivel.length > 0 && modulo) {
                 const { data } = await supabaseClient
                     .from('calificaciones')
                     .select('*')
@@ -1569,7 +1661,6 @@
                 if (data) notasDB = data;
             }
 
-            // Evaluaciones propias de este nivel + módulo, más cualquier nota ya existente para alumnos de este nivel y módulo
             const evalContext = getEvaluationsForContext(nivel, modulo);
             const evaluacionesUnicas = new Set(evalContext);
             notasDB.forEach(n => {
@@ -1768,11 +1859,15 @@
         // -------------------------------------------------------------
         async function generarInformes() {
             const nivel = document.getElementById('report-level-select').value;
-            const modulo = document.getElementById('report-module-select').value || state.modulesList[0];
+            const repSelect = document.getElementById('report-module-select');
+            const moduloSeleccionado = repSelect ? repSelect.value : ALL_MODULES_OPTION;
+            const esTodas = moduloSeleccionado === ALL_MODULES_OPTION;
+
+            const etiquetaModulo = esTodas ? 'Todas' : moduloSeleccionado;
 
             document.getElementById('report-attendance-subtitle').textContent = `Filtro: ${nivel}`;
             document.getElementById('report-teachers-subtitle').textContent = `Filtro: ${nivel}`;
-            document.getElementById('report-grades-subtitle').textContent = `Filtro: ${nivel} | Módulo: ${modulo}`;
+            document.getElementById('report-grades-subtitle').textContent = `Filtro: ${nivel} | Módulo: ${etiquetaModulo}`;
 
             const alumnosNivel = state.students.filter(s => s.nivel === nivel);
             const maestrosNivel = state.teachers.filter(m => m.nivel === nivel);
@@ -1903,88 +1998,170 @@
                 });
             }
 
-            // C) REPORTE NOTAS
+            // C) REPORTE NOTAS (MÓDULO ESPECÍFICO DEL NIVEL O "TODAS")
             if (alumnosNivel.length === 0) {
                 document.getElementById('report-stat-avg-grade').textContent = '0.0';
                 document.getElementById('report-grades-tbody').innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">No hay alumnos registrados en ${escapeHtml(nivel)}</td></tr>`;
             } else {
                 const idsAlumnosNivel = alumnosNivel.map(s => s.id);
-                const { data: calificaciones } = await supabaseClient
+                let queryNotas = supabaseClient
                     .from('calificaciones')
                     .select('*')
-                    .eq('modulo', modulo)
                     .in('alumno_id', idsAlumnosNivel);
 
-                const evalsModulo = new Set(getEvaluationsForContext(nivel, modulo));
-                const mapaNotas = {};
-
-                if (calificaciones) {
-                    calificaciones.forEach(c => {
-                        evalsModulo.add(c.evaluacion);
-                        if (!mapaNotas[c.alumno_id]) mapaNotas[c.alumno_id] = {};
-                        mapaNotas[c.alumno_id][c.evaluacion] = c.nota;
-                    });
+                if (!esTodas && moduloSeleccionado) {
+                    queryNotas = queryNotas.eq('modulo', moduloSeleccionado);
                 }
 
-                const evalList = Array.from(evalsModulo);
+                const { data: calificaciones } = await queryNotas;
 
                 const headerGrades = document.getElementById('report-grades-header');
-                headerGrades.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Alumno</th>`;
-                evalList.forEach(ev => {
-                    headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300">${escapeHtml(ev)}</th>`;
-                });
-                headerGrades.innerHTML += `
-                    <th class="py-3 px-4 text-center font-bold text-indigo-700 dark:text-indigo-400">Promedio</th>
-                    <th class="py-3 px-4 text-right font-bold text-slate-600 dark:text-slate-300">Estatus</th>
-                `;
-
                 const tbodyGrades = document.getElementById('report-grades-tbody');
                 tbodyGrades.innerHTML = '';
 
                 let sumaPromediosGeneral = 0;
                 let totalAlumnosConNotas = 0;
 
-                alumnosNivel.forEach(s => {
-                    let colNotasHtml = '';
-                    let sumaAlumno = 0;
-                    let contAlumno = 0;
+                if (esTodas) {
+                    // Vista consolidada de TODOS los módulos del nivel
+                    const modulosDelNivel = getModulesForLevel(nivel);
+                    const modulosSet = new Set(modulosDelNivel);
+                    const mapaAlumnoModulo = {};
 
-                    evalList.forEach(ev => {
-                        const val = (mapaNotas[s.id] && mapaNotas[s.id][ev] !== undefined) ? mapaNotas[s.id][ev] : null;
-                        if (val !== null) {
-                            sumaAlumno += parseFloat(val);
-                            contAlumno++;
-                            colNotasHtml += `<td class="py-3 px-3 text-center font-medium text-slate-700 dark:text-slate-300">${parseFloat(val).toFixed(1)}</td>`;
-                        } else {
-                            colNotasHtml += `<td class="py-3 px-3 text-center text-slate-300 dark:text-slate-600">-</td>`;
-                        }
-                    });
-
-                    let promedioTxt = '-';
-                    let statusBadge = `<span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-xs font-semibold">Sin Evaluaciones</span>`;
-
-                    if (contAlumno > 0) {
-                        const prom = (sumaAlumno / contAlumno);
-                        promedioTxt = prom.toFixed(1);
-                        sumaPromediosGeneral += prom;
-                        totalAlumnosConNotas++;
-
-                        if (prom >= 6.0) {
-                            statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold">Aprobado</span>`;
-                        } else {
-                            statusBadge = `<span class="px-2.5 py-1 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-bold">Reprobado</span>`;
-                        }
+                    if (calificaciones) {
+                        calificaciones.forEach(c => {
+                            if (c.modulo) modulosSet.add(c.modulo);
+                            if (!mapaAlumnoModulo[c.alumno_id]) mapaAlumnoModulo[c.alumno_id] = {};
+                            if (!mapaAlumnoModulo[c.alumno_id][c.modulo]) {
+                                mapaAlumnoModulo[c.alumno_id][c.modulo] = { suma: 0, cont: 0 };
+                            }
+                            const valNum = parseFloat(c.nota);
+                            if (!isNaN(valNum)) {
+                                mapaAlumnoModulo[c.alumno_id][c.modulo].suma += valNum;
+                                mapaAlumnoModulo[c.alumno_id][c.modulo].cont++;
+                            }
+                        });
                     }
 
-                    tbodyGrades.innerHTML += `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</td>
-                            ${colNotasHtml}
-                            <td class="py-3 px-4 text-center font-extrabold text-sm text-indigo-700 dark:text-indigo-400">${promedioTxt}</td>
-                            <td class="py-3 px-4 text-right">${statusBadge}</td>
-                        </tr>
+                    const modList = Array.from(modulosSet);
+
+                    headerGrades.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Alumno</th>`;
+                    modList.forEach(mod => {
+                        headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300">${escapeHtml(mod)}</th>`;
+                    });
+                    headerGrades.innerHTML += `
+                        <th class="py-3 px-4 text-center font-bold text-indigo-700 dark:text-indigo-400">Promedio General</th>
+                        <th class="py-3 px-4 text-right font-bold text-slate-600 dark:text-slate-300">Estatus</th>
                     `;
-                });
+
+                    alumnosNivel.forEach(s => {
+                        let colModHtml = '';
+                        let sumaGeneralAlumno = 0;
+                        let contGeneralAlumno = 0;
+
+                        modList.forEach(mod => {
+                            const infoMod = mapaAlumnoModulo[s.id] ? mapaAlumnoModulo[s.id][mod] : null;
+                            if (infoMod && infoMod.cont > 0) {
+                                const promMod = infoMod.suma / infoMod.cont;
+                                sumaGeneralAlumno += promMod;
+                                contGeneralAlumno++;
+                                colModHtml += `<td class="py-3 px-3 text-center font-medium text-slate-700 dark:text-slate-300">${promMod.toFixed(1)}</td>`;
+                            } else {
+                                colModHtml += `<td class="py-3 px-3 text-center text-slate-300 dark:text-slate-600">-</td>`;
+                            }
+                        });
+
+                        let promedioTxt = '-';
+                        let statusBadge = `<span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-xs font-semibold">Sin Evaluaciones</span>`;
+
+                        if (contGeneralAlumno > 0) {
+                            const prom = sumaGeneralAlumno / contGeneralAlumno;
+                            promedioTxt = prom.toFixed(1);
+                            sumaPromediosGeneral += prom;
+                            totalAlumnosConNotas++;
+
+                            if (prom >= 6.0) {
+                                statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold">Aprobado</span>`;
+                            } else {
+                                statusBadge = `<span class="px-2.5 py-1 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-bold">Reprobado</span>`;
+                            }
+                        }
+
+                        tbodyGrades.innerHTML += `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</td>
+                                ${colModHtml}
+                                <td class="py-3 px-4 text-center font-extrabold text-sm text-indigo-700 dark:text-indigo-400">${promedioTxt}</td>
+                                <td class="py-3 px-4 text-right">${statusBadge}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    // Vista por módulo individual dentro del nivel
+                    const evalsModulo = new Set(getEvaluationsForContext(nivel, moduloSeleccionado));
+                    const mapaNotas = {};
+
+                    if (calificaciones) {
+                        calificaciones.forEach(c => {
+                            if (c.evaluacion) evalsModulo.add(c.evaluacion);
+                            if (!mapaNotas[c.alumno_id]) mapaNotas[c.alumno_id] = {};
+                            mapaNotas[c.alumno_id][c.evaluacion] = c.nota;
+                        });
+                    }
+
+                    const evalList = Array.from(evalsModulo);
+
+                    headerGrades.innerHTML = `<th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Alumno</th>`;
+                    evalList.forEach(ev => {
+                        headerGrades.innerHTML += `<th class="py-3 px-3 text-center font-semibold text-slate-600 dark:text-slate-300">${escapeHtml(ev)}</th>`;
+                    });
+                    headerGrades.innerHTML += `
+                        <th class="py-3 px-4 text-center font-bold text-indigo-700 dark:text-indigo-400">Promedio</th>
+                        <th class="py-3 px-4 text-right font-bold text-slate-600 dark:text-slate-300">Estatus</th>
+                    `;
+
+                    alumnosNivel.forEach(s => {
+                        let colNotasHtml = '';
+                        let sumaAlumno = 0;
+                        let contAlumno = 0;
+
+                        evalList.forEach(ev => {
+                            const val = (mapaNotas[s.id] && mapaNotas[s.id][ev] !== undefined) ? mapaNotas[s.id][ev] : null;
+                            if (val !== null) {
+                                sumaAlumno += parseFloat(val);
+                                contAlumno++;
+                                colNotasHtml += `<td class="py-3 px-3 text-center font-medium text-slate-700 dark:text-slate-300">${parseFloat(val).toFixed(1)}</td>`;
+                            } else {
+                                colNotasHtml += `<td class="py-3 px-3 text-center text-slate-300 dark:text-slate-600">-</td>`;
+                            }
+                        });
+
+                        let promedioTxt = '-';
+                        let statusBadge = `<span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-xs font-semibold">Sin Evaluaciones</span>`;
+
+                        if (contAlumno > 0) {
+                            const prom = (sumaAlumno / contAlumno);
+                            promedioTxt = prom.toFixed(1);
+                            sumaPromediosGeneral += prom;
+                            totalAlumnosConNotas++;
+
+                            if (prom >= 6.0) {
+                                statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold">Aprobado</span>`;
+                            } else {
+                                statusBadge = `<span class="px-2.5 py-1 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-bold">Reprobado</span>`;
+                            }
+                        }
+
+                        tbodyGrades.innerHTML += `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(s.nombres)} ${escapeHtml(s.apellidos)}</td>
+                                ${colNotasHtml}
+                                <td class="py-3 px-4 text-center font-extrabold text-sm text-indigo-700 dark:text-indigo-400">${promedioTxt}</td>
+                                <td class="py-3 px-4 text-right">${statusBadge}</td>
+                            </tr>
+                        `;
+                    });
+                }
 
                 const promGlobal = totalAlumnosConNotas > 0 ? (sumaPromediosGeneral / totalAlumnosConNotas).toFixed(1) : '0.0';
                 document.getElementById('report-stat-avg-grade').textContent = promGlobal;
